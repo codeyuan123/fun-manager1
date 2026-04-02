@@ -196,6 +196,9 @@ select {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  background:
+    radial-gradient(circle at top right, rgba(125, 211, 252, 0.06), transparent 22%),
+    linear-gradient(180deg, rgba(4, 10, 16, 0.92), rgba(6, 12, 20, 0.96));
 }
 
 .terminal-header {
@@ -279,11 +282,28 @@ select {
 
 .terminal-content {
   padding: 24px;
+  min-height: calc(100vh - 88px);
 }
 
 .terminal-page {
+  position: relative;
+  min-height: calc(100vh - 136px);
   display: grid;
   gap: 18px;
+  align-content: start;
+}
+
+.terminal-page > .el-loading-mask {
+  background: rgba(4, 10, 16, 0.78) !important;
+  backdrop-filter: blur(14px);
+}
+
+.terminal-page > .el-loading-mask .el-loading-spinner .path {
+  stroke: var(--fm-accent);
+}
+
+.terminal-page > .el-loading-mask .el-loading-spinner .el-loading-text {
+  color: var(--fm-text-soft);
 }
 
 .headline-panel,
