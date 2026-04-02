@@ -107,7 +107,29 @@ const holderRows = computed(() =>
 
 const managerRadar = computed<FundPerformanceRadar>(() => {
   const firstManager = detail.value.managers[0]
-  return firstManager?.power || detail.value.performanceRadar
+  const source = firstManager?.power || detail.value.performanceRadar
+  const categories = (source.categories || [])
+    .map((label) => String(label || '').trim())
+    .filter(Boolean)
+
+  if (!categories.length) {
+    return {
+      average: source.average,
+      categories: ['鏆傛棤鏁版嵁'],
+      data: [0],
+    }
+  }
+
+  const normalizedData = categories.map((_, index) => {
+    const value = Number(source.data?.[index] ?? 0)
+    return Number.isFinite(value) ? value : 0
+  })
+
+  return {
+    average: source.average,
+    categories,
+    data: normalizedData,
+  }
 })
 
 const loadWatchlist = async () => {
