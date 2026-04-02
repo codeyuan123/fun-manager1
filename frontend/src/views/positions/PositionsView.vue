@@ -95,37 +95,40 @@ load()
 </script>
 
 <template>
-  <div v-loading="loading" class="panel">
-    <div class="page-actions">
-      <el-button type="primary" @click="openTrade('BUY')">新增买入</el-button>
-      <el-button @click="load">刷新</el-button>
-    </div>
-    <el-table :data="positions">
-      <el-table-column prop="fundCode" label="代码" width="100" />
-      <el-table-column prop="fundName" label="基金名称" min-width="180" />
+  <el-card class="page-card" shadow="never" v-loading="loading">
+    <template #header>
+      <div class="page-toolbar">
+        <el-button type="primary" @click="openTrade('BUY')">新增买入</el-button>
+        <el-button @click="load">刷新</el-button>
+      </div>
+    </template>
+
+    <el-table :data="positions" stripe>
+      <el-table-column prop="fundCode" label="代码" width="100" fixed="left" />
+      <el-table-column prop="fundName" label="基金名称" min-width="200" />
       <el-table-column prop="totalShares" label="份额" width="120" />
-      <el-table-column label="成本">
+      <el-table-column label="成本" width="130">
         <template #default="{ row }">{{ money(row.currentCost) }}</template>
       </el-table-column>
-      <el-table-column label="市值">
+      <el-table-column label="市值" width="130">
         <template #default="{ row }">{{ money(row.marketValue) }}</template>
       </el-table-column>
-      <el-table-column label="累计收益">
+      <el-table-column label="累计收益" width="130">
         <template #default="{ row }">
           <span :class="clsByNumber(row.estimatedProfit)">{{ money(row.estimatedProfit) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="收益率">
+      <el-table-column label="收益率" width="120">
         <template #default="{ row }">
           <span :class="clsByNumber(row.estimatedProfitRate)">{{ percent(row.estimatedProfitRate) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="今日预估">
+      <el-table-column label="今日预估" width="130">
         <template #default="{ row }">
           <span :class="clsByNumber(row.todayProfit)">{{ money(row.todayProfit) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="260">
+      <el-table-column label="操作" width="260" fixed="right">
         <template #default="{ row }">
           <el-button size="small" @click="showTransactions(row.fundCode)">明细</el-button>
           <el-button size="small" type="primary" @click="openTrade('BUY', row)">买入</el-button>
@@ -133,7 +136,7 @@ load()
         </template>
       </el-table-column>
     </el-table>
-  </div>
+  </el-card>
 
   <el-dialog v-model="tradeDialogVisible" :title="tradeMode === 'BUY' ? '新增买入' : '新增卖出'" width="560px">
     <el-form label-width="120px">
@@ -168,8 +171,8 @@ load()
     </template>
   </el-dialog>
 
-  <el-dialog v-model="txDialogVisible" :title="`交易明细 - ${currentFundCode}`" width="820px">
-    <el-table :data="txList">
+  <el-dialog v-model="txDialogVisible" :title="`交易明细 - ${currentFundCode}`" width="860px">
+    <el-table :data="txList" stripe>
       <el-table-column prop="transactionType" label="类型" width="100" />
       <el-table-column prop="tradeDate" label="交易日期" width="120" />
       <el-table-column label="金额">

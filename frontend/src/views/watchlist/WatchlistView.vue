@@ -59,42 +59,50 @@ load()
 </script>
 
 <template>
-  <div class="panel" v-loading="loading">
-    <div class="page-actions">
-      <el-input v-model="keyword" placeholder="输入基金代码或名称" style="max-width: 300px" @keyup.enter="search" />
-      <el-button type="primary" @click="search">搜索</el-button>
-      <el-button @click="load">刷新自选</el-button>
+  <el-card class="page-card" shadow="never" v-loading="loading">
+    <template #header>
+      <div class="page-toolbar">
+        <el-input v-model="keyword" placeholder="输入基金代码或名称" style="max-width: 340px" @keyup.enter="search" clearable />
+        <el-button type="primary" @click="search">搜索</el-button>
+        <el-button @click="load">刷新自选</el-button>
+      </div>
+    </template>
+
+    <div class="panel-inner" style="margin-bottom: 14px">
+      <h3 class="section-title">搜索结果</h3>
+      <el-table :data="candidates" size="small" stripe>
+        <el-table-column prop="fundCode" label="代码" width="120" />
+        <el-table-column prop="fundName" label="基金名称" />
+        <el-table-column prop="fundType" label="类型" width="120" />
+        <el-table-column label="操作" width="120">
+          <template #default="{ row }">
+            <el-button size="small" type="primary" @click="add(row.fundCode)">加入</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
 
-    <el-table :data="candidates" size="small" style="margin-bottom: 18px">
-      <el-table-column prop="fundCode" label="代码" width="120" />
-      <el-table-column prop="fundName" label="基金名称" />
-      <el-table-column prop="fundType" label="类型" width="120" />
-      <el-table-column label="操作" width="120">
-        <template #default="{ row }">
-          <el-button size="small" type="primary" @click="add(row.fundCode)">加入</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <el-table :data="watchlist">
-      <el-table-column prop="fundCode" label="代码" width="120" />
-      <el-table-column prop="fundName" label="基金名称" />
-      <el-table-column prop="fundType" label="类型" width="120" />
-      <el-table-column label="估值">
-        <template #default="{ row }">{{ money(row.estimateNav) }}</template>
-      </el-table-column>
-      <el-table-column label="涨跌幅">
-        <template #default="{ row }">
-          <span :class="clsByNumber(row.estimateGrowthRate)">{{ percent((row.estimateGrowthRate || 0) / 100) }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="estimateTime" label="估值时间" width="180" />
-      <el-table-column label="操作" width="120">
-        <template #default="{ row }">
-          <el-button size="small" type="danger" plain @click="remove(row.fundCode)">移除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-  </div>
+    <div class="panel-inner">
+      <h3 class="section-title">自选列表</h3>
+      <el-table :data="watchlist" stripe>
+        <el-table-column prop="fundCode" label="代码" width="120" />
+        <el-table-column prop="fundName" label="基金名称" />
+        <el-table-column prop="fundType" label="类型" width="120" />
+        <el-table-column label="估值">
+          <template #default="{ row }">{{ money(row.estimateNav) }}</template>
+        </el-table-column>
+        <el-table-column label="涨跌幅">
+          <template #default="{ row }">
+            <span :class="clsByNumber(row.estimateGrowthRate)">{{ percent((row.estimateGrowthRate || 0) / 100) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="estimateTime" label="估值时间" width="180" />
+        <el-table-column label="操作" width="120">
+          <template #default="{ row }">
+            <el-button size="small" type="danger" plain @click="remove(row.fundCode)">移除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+  </el-card>
 </template>

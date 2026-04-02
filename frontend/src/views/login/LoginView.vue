@@ -33,21 +33,31 @@ const submit = async () => {
 
 <template>
   <div class="login-page">
-    <div class="login-card">
-      <div class="login-title">基金管理平台</div>
-      <div class="login-subtitle">实时收益推测 / 自选 / 数据看板</div>
-      <el-form @submit.prevent>
-        <el-form-item label="用户名">
-          <el-input v-model="form.username" />
-        </el-form-item>
-        <el-form-item label="密码">
-          <el-input v-model="form.password" type="password" show-password />
-        </el-form-item>
-      </el-form>
-      <el-button type="primary" :loading="loading" class="login-button" @click="submit">
-        登录
-      </el-button>
-      <p class="hint">默认账号：admin / admin123</p>
+    <div class="login-panel">
+      <section class="login-hero">
+        <div class="login-kicker">FUND MANAGER SYSTEM</div>
+        <h1 class="login-headline">基金管理后台</h1>
+        <p class="login-desc">
+          统一管理基金持仓、自选与收益看板，支持实时估值推测、交易流水与收益趋势分析。
+        </p>
+      </section>
+
+      <section class="login-form-wrap">
+        <h2 class="login-title">账号登录</h2>
+        <p class="login-sub">使用系统账号进入管理台</p>
+        <el-form @submit.prevent>
+          <el-form-item label="用户名">
+            <el-input v-model="form.username" placeholder="请输入用户名" />
+          </el-form-item>
+          <el-form-item label="密码">
+            <el-input v-model="form.password" type="password" show-password placeholder="请输入密码" />
+          </el-form-item>
+        </el-form>
+        <el-button type="primary" :loading="loading" class="login-button" @click="submit">
+          登录系统
+        </el-button>
+        <div class="login-hint">默认账号：admin / admin123</div>
+      </section>
     </div>
   </div>
 </template>
