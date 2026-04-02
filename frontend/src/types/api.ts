@@ -1,4 +1,4 @@
-﻿export interface ApiResponse<T> {
+export interface ApiResponse<T> {
   code: number
   message: string
   data: T
@@ -95,4 +95,87 @@ export interface FundEstimate {
   estimateNav: number
   estimateGrowthRate: number
   estimateTime: string
+}
+
+export interface FundReturnStat {
+  label: string
+  value: number | null
+}
+
+export interface FundNavPoint {
+  navDate: string
+  unitNav: number
+  accumulatedNav: number | null
+  dailyGrowthRate: number | null
+}
+
+export interface FundHoldingItem {
+  stockCode: string
+  stockName: string
+  navRatio: number | null
+  holdingShares: number | null
+  holdingMarketValue: number | null
+  reportDate: string | null
+}
+
+export interface FundChartSeries {
+  name: string | null
+  data: Array<number | null>
+}
+
+export interface FundChartBlock {
+  categories: string[]
+  series: FundChartSeries[]
+}
+
+export interface FundScalePoint {
+  date: string
+  value: number | null
+  mom: string | null
+}
+
+export interface FundPerformanceRadar {
+  average: string | null
+  categories: string[]
+  data: Array<number | null>
+}
+
+export interface FundManagerCard {
+  id: string | null
+  name: string | null
+  avatar: string | null
+  star: number | null
+  workTime: string | null
+  fundSize: string | null
+  power: FundPerformanceRadar
+  profitComparison: FundChartBlock
+}
+
+export interface FundPeerReference {
+  fundCode: string
+  fundName: string
+  returnRate: number | null
+}
+
+export interface FundDetail {
+  fundCode: string
+  fundName: string
+  fundType: string
+  riskLevel: string | null
+  managementCompany: string | null
+  latestNav: number | null
+  latestNavDate: string | null
+  estimateNav: number | null
+  estimateGrowthRate: number | null
+  estimateTime: string | null
+  sourceRate: number | null
+  currentRate: number | null
+  minPurchaseAmount: number | null
+  returnStats: FundReturnStat[]
+  performanceRadar: FundPerformanceRadar
+  managers: FundManagerCard[]
+  assetAllocation: FundChartBlock
+  holderStructure: FundChartBlock
+  scaleTrend: FundScalePoint[]
+  sameTypeReferences: FundPeerReference[]
 }

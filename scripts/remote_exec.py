@@ -4,6 +4,14 @@ import sys
 import paramiko
 
 
+def write_text(stream, text: str) -> None:
+    try:
+        stream.write(text)
+    except UnicodeEncodeError:
+        encoding = stream.encoding or "utf-8"
+        stream.buffer.write(text.encode(encoding, errors="replace"))
+
+
 def main() -> int:
     host = os.environ.get("REMOTE_HOST")
     user = os.environ.get("REMOTE_USER")
@@ -28,9 +36,9 @@ def main() -> int:
         out = stdout.read().decode("utf-8", errors="replace")
         err = stderr.read().decode("utf-8", errors="replace")
         if out:
-            sys.stdout.write(out)
+            write_text(sys.stdout, out)
         if err:
-            sys.stderr.write(err)
+            write_text(sys.stderr, err)
         return exit_code
     finally:
         client.close()

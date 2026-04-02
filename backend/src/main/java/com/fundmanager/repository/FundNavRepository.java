@@ -11,7 +11,13 @@ import java.util.Optional;
 public interface FundNavRepository extends JpaRepository<FundNav, Long> {
     Optional<FundNav> findByFundCodeAndNavDate(String fundCode, LocalDate navDate);
 
+    Optional<FundNav> findFirstByFundCodeAndNavDateLessThanEqualOrderByNavDateDesc(String fundCode, LocalDate navDate);
+
     List<FundNav> findByFundCodeOrderByNavDateDesc(String fundCode, Pageable pageable);
+
+    List<FundNav> findByFundCodeOrderByNavDateAsc(String fundCode);
+
+    List<FundNav> findByFundCodeAndNavDateGreaterThanEqualOrderByNavDateAsc(String fundCode, LocalDate start);
 
     List<FundNav> findByFundCodeInAndNavDateBetweenOrderByNavDateAsc(List<String> fundCodes, LocalDate start, LocalDate end);
 }

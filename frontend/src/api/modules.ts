@@ -1,9 +1,12 @@
-﻿import http from './http'
+import http from './http'
 import type {
   ApiResponse,
   DashboardOverview,
   DistributionItem,
+  FundDetail,
   FundEstimate,
+  FundHoldingItem,
+  FundNavPoint,
   FundSearchItem,
   LoginVO,
   PositionItem,
@@ -65,3 +68,17 @@ export const searchFundApi = (keyword: string) =>
 
 export const estimateApi = (fundCode: string) =>
   http.get<ApiResponse<FundEstimate>>(`/funds/${fundCode}/estimate`)
+
+export const fundDetailApi = (fundCode: string) =>
+  http.get<ApiResponse<FundDetail>>(`/funds/${fundCode}`)
+
+export const fundNavHistoryApi = (fundCode: string, range: '1m' | '3m' | '6m' | '1y' | 'max' = '6m') =>
+  http.get<ApiResponse<FundNavPoint[]>>(`/funds/${fundCode}/nav-history`, { params: { range } })
+
+export const fundHoldingsApi = (fundCode: string, year?: number, quarter?: number) =>
+  http.get<ApiResponse<FundHoldingItem[]>>(`/funds/${fundCode}/holdings`, {
+    params: {
+      year,
+      quarter,
+    },
+  })

@@ -5,8 +5,40 @@ APP_ROOT=/opt/fund-manager
 APP_USER=fundapp
 DB_NAME=fund_manager
 DB_USER=fund_app
+MIRROR_PROFILE=${MIRROR_PROFILE:-cn}
+APT_MIRROR_ROOT=${APT_MIRROR_ROOT:-https://mirrors.tuna.tsinghua.edu.cn}
 
 export DEBIAN_FRONTEND=noninteractive
+
+configure_apt_mirror() {
+  local deb822_file=/etc/apt/sources.list.d/debian.sources
+
+  if [[ -f "$deb822_file" ]]; then
+    cat > "$deb822_file" <<EOF
+Types: deb
+URIs: ${APT_MIRROR_ROOT}/debian
+Suites: bookworm bookworm-updates
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+Types: deb
+URIs: ${APT_MIRROR_ROOT}/debian-security
+Suites: bookworm-security
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+EOF
+  else
+    cat > /etc/apt/sources.list <<EOF
+deb ${APT_MIRROR_ROOT}/debian bookworm main contrib non-free non-free-firmware
+deb ${APT_MIRROR_ROOT}/debian bookworm-updates main contrib non-free non-free-firmware
+deb ${APT_MIRROR_ROOT}/debian-security bookworm-security main contrib non-free non-free-firmware
+EOF
+  fi
+}
+
+if [[ "$MIRROR_PROFILE" == "cn" ]]; then
+  configure_apt_mirror
+fi
 
 apt-get update
 apt-get install -y mariadb-server redis-server maven curl unzip

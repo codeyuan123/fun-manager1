@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface FundTransactionRepository extends JpaRepository<FundTransaction, Long> {
     List<FundTransaction> findByUserIdAndFundCodeOrderByTradeDateDescIdDesc(Long userId, String fundCode);
+
+    List<FundTransaction> findByUserIdOrderByTradeDateAscIdAsc(Long userId);
 }

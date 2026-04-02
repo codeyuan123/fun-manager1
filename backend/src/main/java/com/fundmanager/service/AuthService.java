@@ -28,9 +28,9 @@ public class AuthService {
 
     public LoginVO login(LoginRequest request) {
         SysUser user = userRepository.findByUsername(request.username())
-                .orElseThrow(() -> new BusinessException("Username or password is invalid"));
+                .orElseThrow(() -> new BusinessException("用户名或密码错误"));
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new BusinessException("Username or password is invalid");
+            throw new BusinessException("用户名或密码错误");
         }
         String token = jwtService.generateToken(user.getId(), user.getUsername());
         return new LoginVO(token, user.getUsername(), user.getNickname());
@@ -38,7 +38,7 @@ public class AuthService {
 
     public Map<String, Object> me(String username) {
         SysUser user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new BusinessException("User not found"));
+                .orElseThrow(() -> new BusinessException("用户不存在"));
         return Map.of(
                 "id", user.getId(),
                 "username", user.getUsername(),

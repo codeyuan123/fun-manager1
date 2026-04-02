@@ -1,34 +1,41 @@
-﻿<script setup lang="ts">
-import { reactive, ref } from 'vue'
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { buyApi, estimateApi, positionsApi, sellApi, transactionsApi } from '../../api/modules'
+import FundTradeDialog from '../../components/fund/FundTradeDialog.vue'
+import { positionsApi, transactionsApi } from '../../api/modules'
 import type { PositionItem, TransactionItem } from '../../types/api'
-import { clsByNumber, money, percent } from '../../utils/format'
+import { clsByNumber, fundTypeLabel, money, percent, tradeTypeLabel } from '../../utils/format'
 
+const router = useRouter()
 const loading = ref(false)
 const positions = ref<PositionItem[]>([])
+
+const tradeVisible = ref(false)
+const tradeMode = ref<'BUY' | 'SELL'>('BUY')
+const activePosition = ref<Partial<PositionItem>>({})
+
 const txDialogVisible = ref(false)
 const txList = ref<TransactionItem[]>([])
 const currentFundCode = ref('')
 
-const tradeDialogVisible = ref(false)
-const tradeMode = ref<'BUY' | 'SELL'>('BUY')
-const tradeForm = reactive({
-  fundCode: '',
-  fundName: '',
-  amount: 1000,
-  shares: undefined as number | undefined,
-  fee: 0,
-  nav: 1,
-  tradeDate: '',
-  remark: '',
+const summary = computed(() => {
+  const totalCost = positions.value.reduce((sum, item) => sum + Number(item.currentCost || 0), 0)
+  const totalValue = positions.value.reduce((sum, item) => sum + Number(item.marketValue || 0), 0)
+  const totalPnl = positions.value.reduce((sum, item) => sum + Number(item.estimatedProfit || 0), 0)
+  return {
+    totalCost,
+    totalValue,
+    totalPnl,
+    totalRate: totalCost ? totalPnl / totalCost : 0,
+  }
 })
 
 const load = async () => {
   loading.value = true
   try {
-    const resp = await positionsApi()
-    positions.value = resp.data.data
+    const response = await positionsApi()
+    positions.value = response.data.data
   } catch (error: any) {
     ElMessage.error(error?.message || '持仓加载失败')
   } finally {
@@ -38,152 +45,152 @@ const load = async () => {
 
 const openTrade = (mode: 'BUY' | 'SELL', row?: PositionItem) => {
   tradeMode.value = mode
-  tradeForm.fundCode = row?.fundCode || ''
-  tradeForm.fundName = row?.fundName || ''
-  tradeForm.amount = 1000
-  tradeForm.shares = undefined
-  tradeForm.fee = 0
-  tradeForm.nav = row?.currentNav || 1
-  tradeForm.tradeDate = ''
-  tradeForm.remark = ''
-  tradeDialogVisible.value = true
-}
-
-const fillNav = async () => {
-  if (!tradeForm.fundCode) return
-  try {
-    const resp = await estimateApi(tradeForm.fundCode)
-    tradeForm.nav = Number(resp.data.data.estimateNav || 1)
-    if (!tradeForm.fundName) tradeForm.fundName = resp.data.data.fundName
-  } catch {
-    ElMessage.warning('未获取到估值，使用手工填写净值')
-  }
-}
-
-const submitTrade = async () => {
-  const payload = {
-    ...tradeForm,
-    tradeDate: tradeForm.tradeDate || undefined,
-  }
-  try {
-    if (tradeMode.value === 'BUY') {
-      await buyApi(payload)
-      ElMessage.success('买入记录已保存')
-    } else {
-      await sellApi(payload)
-      ElMessage.success('卖出记录已保存')
-    }
-    tradeDialogVisible.value = false
-    await load()
-  } catch (error: any) {
-    ElMessage.error(error?.message || '交易提交失败')
-  }
+  activePosition.value = row || {}
+  tradeVisible.value = true
 }
 
 const showTransactions = async (fundCode: string) => {
   currentFundCode.value = fundCode
   txDialogVisible.value = true
   try {
-    const resp = await transactionsApi(fundCode)
-    txList.value = resp.data.data
+    const response = await transactionsApi(fundCode)
+    txList.value = response.data.data
   } catch (error: any) {
-    ElMessage.error(error?.message || '交易明细加载失败')
+    ElMessage.error(error?.message || '交易流水加载失败')
   }
+}
+
+const openFund = (fundCode: string) => {
+  router.push(`/fund/${fundCode}`)
 }
 
 load()
 </script>
 
 <template>
-  <el-card class="page-card" shadow="never" v-loading="loading">
-    <template #header>
-      <div class="page-toolbar">
+  <div class="terminal-page" v-loading="loading">
+    <section class="headline-panel">
+      <div>
+        <span class="eyebrow">持仓台账</span>
+        <h2>记录买卖流水，查看当前仓位，并可直接跳转到基金详情页。</h2>
+      </div>
+      <div class="headline-actions">
         <el-button type="primary" @click="openTrade('BUY')">新增买入</el-button>
         <el-button @click="load">刷新</el-button>
       </div>
-    </template>
+    </section>
 
-    <el-table :data="positions" stripe>
-      <el-table-column prop="fundCode" label="代码" width="100" fixed="left" />
-      <el-table-column prop="fundName" label="基金名称" min-width="200" />
-      <el-table-column prop="totalShares" label="份额" width="120" />
-      <el-table-column label="成本" width="130">
-        <template #default="{ row }">{{ money(row.currentCost) }}</template>
-      </el-table-column>
-      <el-table-column label="市值" width="130">
-        <template #default="{ row }">{{ money(row.marketValue) }}</template>
-      </el-table-column>
-      <el-table-column label="累计收益" width="130">
-        <template #default="{ row }">
-          <span :class="clsByNumber(row.estimatedProfit)">{{ money(row.estimatedProfit) }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="收益率" width="120">
-        <template #default="{ row }">
-          <span :class="clsByNumber(row.estimatedProfitRate)">{{ percent(row.estimatedProfitRate) }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="今日预估" width="130">
-        <template #default="{ row }">
-          <span :class="clsByNumber(row.todayProfit)">{{ money(row.todayProfit) }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="260" fixed="right">
-        <template #default="{ row }">
-          <el-button size="small" @click="showTransactions(row.fundCode)">明细</el-button>
-          <el-button size="small" type="primary" @click="openTrade('BUY', row)">买入</el-button>
-          <el-button size="small" type="danger" plain @click="openTrade('SELL', row)">卖出</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-  </el-card>
+    <section class="metric-grid metric-grid-compact">
+      <article class="metric-card">
+        <span>持仓成本</span>
+        <strong>{{ money(summary.totalCost) }}</strong>
+      </article>
+      <article class="metric-card">
+        <span>持仓市值</span>
+        <strong>{{ money(summary.totalValue) }}</strong>
+      </article>
+      <article class="metric-card">
+        <span>浮动盈亏</span>
+        <strong :class="clsByNumber(summary.totalPnl)">{{ money(summary.totalPnl) }}</strong>
+      </article>
+      <article class="metric-card">
+        <span>收益率</span>
+        <strong :class="clsByNumber(summary.totalRate)">{{ percent(summary.totalRate) }}</strong>
+      </article>
+    </section>
 
-  <el-dialog v-model="tradeDialogVisible" :title="tradeMode === 'BUY' ? '新增买入' : '新增卖出'" width="560px">
-    <el-form label-width="120px">
-      <el-form-item label="基金代码">
-        <el-input v-model="tradeForm.fundCode" @blur="fillNav" />
-      </el-form-item>
-      <el-form-item label="基金名称">
-        <el-input v-model="tradeForm.fundName" />
-      </el-form-item>
-      <el-form-item label="交易金额">
-        <el-input-number v-model="tradeForm.amount" :precision="2" :min="0.01" :step="100" />
-      </el-form-item>
-      <el-form-item label="交易净值">
-        <el-input-number v-model="tradeForm.nav" :precision="6" :min="0.000001" :step="0.01" />
-      </el-form-item>
-      <el-form-item label="交易份额">
-        <el-input-number v-model="tradeForm.shares" :precision="4" :min="0.0001" :step="10" />
-      </el-form-item>
-      <el-form-item label="手续费">
-        <el-input-number v-model="tradeForm.fee" :precision="2" :min="0" :step="1" />
-      </el-form-item>
-      <el-form-item label="交易日期">
-        <el-date-picker v-model="tradeForm.tradeDate" type="date" value-format="YYYY-MM-DD" />
-      </el-form-item>
-      <el-form-item label="备注">
-        <el-input v-model="tradeForm.remark" />
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <el-button @click="tradeDialogVisible = false">取消</el-button>
-      <el-button type="primary" @click="submitTrade">提交</el-button>
-    </template>
-  </el-dialog>
+    <section class="terminal-panel">
+      <div class="panel-head">
+        <div>
+          <span class="panel-kicker">持仓明细</span>
+          <h3>当前仓位总览</h3>
+        </div>
+      </div>
 
-  <el-dialog v-model="txDialogVisible" :title="`交易明细 - ${currentFundCode}`" width="860px">
-    <el-table :data="txList" stripe>
-      <el-table-column prop="transactionType" label="类型" width="100" />
-      <el-table-column prop="tradeDate" label="交易日期" width="120" />
-      <el-table-column label="金额">
-        <template #default="{ row }">{{ money(row.amount) }}</template>
-      </el-table-column>
-      <el-table-column prop="shares" label="份额" />
-      <el-table-column prop="nav" label="净值" />
-      <el-table-column label="手续费">
-        <template #default="{ row }">{{ money(row.fee) }}</template>
-      </el-table-column>
-      <el-table-column prop="remark" label="备注" />
-    </el-table>
-  </el-dialog>
+      <el-table :data="positions" class="terminal-table clickable-table" size="small" empty-text="暂无持仓">
+        <el-table-column label="基金" min-width="240">
+          <template #default="{ row }">
+            <button class="fund-link-button" @click="openFund(row.fundCode)">
+              <strong>{{ row.fundCode }}</strong>
+              <span>{{ row.fundName }}</span>
+              <em>{{ fundTypeLabel(row.fundType) }}</em>
+            </button>
+          </template>
+        </el-table-column>
+        <el-table-column label="份额" width="110" align="right">
+          <template #default="{ row }">{{ Number(row.totalShares).toFixed(2) }}</template>
+        </el-table-column>
+        <el-table-column label="成本" width="128" align="right">
+          <template #default="{ row }">{{ money(row.currentCost) }}</template>
+        </el-table-column>
+        <el-table-column label="净值" width="110" align="right">
+          <template #default="{ row }">{{ Number(row.currentNav).toFixed(4) }}</template>
+        </el-table-column>
+        <el-table-column label="市值" width="128" align="right">
+          <template #default="{ row }">{{ money(row.marketValue) }}</template>
+        </el-table-column>
+        <el-table-column label="浮盈" width="128" align="right">
+          <template #default="{ row }">
+            <span :class="clsByNumber(row.estimatedProfit)">{{ money(row.estimatedProfit) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="收益率" width="112" align="right">
+          <template #default="{ row }">
+            <span :class="clsByNumber(row.estimatedProfitRate)">{{ percent(row.estimatedProfitRate) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="今日盈亏" width="112" align="right">
+          <template #default="{ row }">
+            <span :class="clsByNumber(row.todayProfit)">{{ money(row.todayProfit) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="260" fixed="right">
+          <template #default="{ row }">
+            <div class="table-actions">
+              <el-button size="small" @click="showTransactions(row.fundCode)">流水</el-button>
+              <el-button size="small" type="primary" @click="openTrade('BUY', row)">买入</el-button>
+              <el-button size="small" type="danger" plain @click="openTrade('SELL', row)">卖出</el-button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </section>
+
+    <FundTradeDialog
+      v-model="tradeVisible"
+      :mode="tradeMode"
+      :fund-code="activePosition.fundCode"
+      :fund-name="activePosition.fundName"
+      :nav="activePosition.currentNav"
+      @success="load"
+    />
+
+    <el-dialog v-model="txDialogVisible" width="900px" title="交易流水" class="terminal-dialog">
+      <el-table :data="txList" class="terminal-table" size="small" empty-text="暂无交易记录">
+        <el-table-column label="方向" width="90">
+          <template #default="{ row }">{{ tradeTypeLabel(row.transactionType) }}</template>
+        </el-table-column>
+        <el-table-column prop="tradeDate" label="交易日期" width="120" />
+        <el-table-column label="金额" width="120" align="right">
+          <template #default="{ row }">{{ money(row.amount) }}</template>
+        </el-table-column>
+        <el-table-column label="份额" width="120" align="right">
+          <template #default="{ row }">{{ Number(row.shares).toFixed(2) }}</template>
+        </el-table-column>
+        <el-table-column label="净值" width="110" align="right">
+          <template #default="{ row }">{{ Number(row.nav).toFixed(4) }}</template>
+        </el-table-column>
+        <el-table-column label="手续费" width="110" align="right">
+          <template #default="{ row }">{{ money(row.fee) }}</template>
+        </el-table-column>
+        <el-table-column prop="remark" label="备注" min-width="180" />
+      </el-table>
+      <template #footer>
+        <div class="dialog-footer">
+          <span class="mono-label">/{{ currentFundCode }}</span>
+          <el-button @click="txDialogVisible = false">关闭</el-button>
+        </div>
+      </template>
+    </el-dialog>
+  </div>
 </template>

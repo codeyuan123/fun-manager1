@@ -5,6 +5,11 @@ spring:
     url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:fund_manager}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: ${DB_USERNAME:fund_app}
     password: ${DB_PASSWORD:fund_app_password}
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      timeout: 3s
   jpa:
     hibernate:
       ddl-auto: validate
@@ -29,7 +34,10 @@ app:
   jwt-secret: ${JWT_SECRET:change-this-secret-in-prod-change-this-secret}
   jwt-expire-seconds: ${JWT_EXPIRE_SECONDS:86400}
   quote:
+    search-url: ${QUOTE_SEARCH_URL:https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx?m=1&key=%s}
     estimate-url: ${QUOTE_ESTIMATE_URL:https://fundgz.1234567.com.cn/js/%s.js}
+    detail-url: ${QUOTE_DETAIL_URL:https://fund.eastmoney.com/pingzhongdata/%s.js?v=%s}
+    holdings-url: ${QUOTE_HOLDINGS_URL:https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=%s&topline=10&year=%d&month=%d}
 
 management:
   endpoints:

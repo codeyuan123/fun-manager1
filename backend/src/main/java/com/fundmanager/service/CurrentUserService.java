@@ -16,7 +16,7 @@ public class CurrentUserService {
 
     public SysUser getByUsername(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new BusinessException("User not found"));
+                .orElseThrow(() -> new BusinessException("用户不存在"));
     }
 
     public Long getUserId(String username) {

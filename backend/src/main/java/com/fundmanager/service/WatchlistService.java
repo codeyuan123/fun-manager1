@@ -50,7 +50,7 @@ public class WatchlistService {
                     watchlistRepository.save(item);
                 }
         );
-        quoteService.refreshEstimate(fundCode);
+        quoteService.loadSnapshot(fundCode, false);
     }
 
     @Transactional
@@ -60,8 +60,8 @@ public class WatchlistService {
     }
 
     private WatchlistItemVO toWatchItem(String fundCode) {
-        FundInfo info = fundInfoRepository.findByFundCode(fundCode).orElse(null);
         FundQuoteSnapshot snapshot = quoteService.loadSnapshot(fundCode, false);
+        FundInfo info = fundInfoRepository.findByFundCode(fundCode).orElse(null);
         return new WatchlistItemVO(
                 fundCode,
                 info == null ? snapshot.fundName() : info.getFundName(),

@@ -221,3 +221,4 @@ frontend/
 - 前端构建路径为 `/`
 - 后端 API 前缀固定为 `/api`
 - 生产数据库使用 MariaDB 10.11（MySQL 协议兼容）
+- 中国网络环境默认使用仓库内镜像配置：`frontend/.npmrc` 指向 `https://registry.npmmirror.com/`，`backend/.mvn/settings.xml` 指向 `https://maven.aliyun.com/repository/public`

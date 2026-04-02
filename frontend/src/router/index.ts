@@ -1,10 +1,5 @@
-﻿import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import AppLayout from '../layout/AppLayout.vue'
-import LoginView from '../views/login/LoginView.vue'
-import DashboardView from '../views/dashboard/DashboardView.vue'
-import PositionsView from '../views/positions/PositionsView.vue'
-import WatchlistView from '../views/watchlist/WatchlistView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -12,17 +7,38 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: LoginView,
+      component: () => import('../views/login/LoginView.vue'),
       meta: { public: true, title: '登录' },
     },
     {
       path: '/',
-      component: AppLayout,
+      component: () => import('../layout/AppLayout.vue'),
       children: [
         { path: '', redirect: '/dashboard' },
-        { path: 'dashboard', name: 'dashboard', component: DashboardView, meta: { title: '数据看板' } },
-        { path: 'positions', name: 'positions', component: PositionsView, meta: { title: '持仓管理' } },
-        { path: 'watchlist', name: 'watchlist', component: WatchlistView, meta: { title: '自选基金' } },
+        {
+          path: 'dashboard',
+          name: 'dashboard',
+          component: () => import('../views/dashboard/DashboardView.vue'),
+          meta: { title: '资产看板' },
+        },
+        {
+          path: 'positions',
+          name: 'positions',
+          component: () => import('../views/positions/PositionsView.vue'),
+          meta: { title: '持仓台账' },
+        },
+        {
+          path: 'watchlist',
+          name: 'watchlist',
+          component: () => import('../views/watchlist/WatchlistView.vue'),
+          meta: { title: '自选基金' },
+        },
+        {
+          path: 'fund/:code',
+          name: 'fund-detail',
+          component: () => import('../views/fund/FundDetailView.vue'),
+          meta: { title: '基金详情' },
+        },
       ],
     },
   ],

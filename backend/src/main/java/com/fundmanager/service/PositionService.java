@@ -100,9 +100,9 @@ public class PositionService {
         LocalDate tradeDate = req.tradeDate() == null ? LocalDate.now() : req.tradeDate();
 
         FundPosition position = positionRepository.findByUserIdAndFundCode(userId, req.fundCode())
-                .orElseThrow(() -> new BusinessException("Position not found"));
+                .orElseThrow(() -> new BusinessException("未找到对应持仓"));
         if (position.getTotalShares().compareTo(shares) < 0) {
-            throw new BusinessException("Sell shares exceed current position");
+            throw new BusinessException("卖出份额超过当前持仓");
         }
 
         BigDecimal avgCostPerShare = safeDivide(position.getCurrentCost(), position.getTotalShares(), 10);
@@ -127,8 +127,8 @@ public class PositionService {
     }
 
     private PositionItemVO toPositionView(FundPosition position) {
-        FundInfo fundInfo = fundInfoRepository.findByFundCode(position.getFundCode()).orElse(null);
         FundQuoteSnapshot snapshot = quoteService.loadSnapshot(position.getFundCode(), false);
+        FundInfo fundInfo = fundInfoRepository.findByFundCode(position.getFundCode()).orElse(null);
         BigDecimal marketValue = position.getTotalShares().multiply(snapshot.currentNav()).setScale(2, RoundingMode.HALF_UP);
         BigDecimal profit = marketValue.subtract(position.getCurrentCost()).setScale(2, RoundingMode.HALF_UP);
         BigDecimal profitRate = position.getCurrentCost().compareTo(BigDecimal.ZERO) == 0

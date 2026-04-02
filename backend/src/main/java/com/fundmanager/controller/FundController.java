@@ -3,6 +3,7 @@ package com.fundmanager.controller;
 import com.fundmanager.common.ApiResponse;
 import com.fundmanager.domain.vo.FundDetailVO;
 import com.fundmanager.domain.vo.FundEstimateVO;
+import com.fundmanager.domain.vo.FundHoldingItemVO;
 import com.fundmanager.domain.vo.FundNavVO;
 import com.fundmanager.domain.vo.FundSearchItemVO;
 import com.fundmanager.service.FundService;
@@ -41,7 +42,14 @@ public class FundController {
 
     @GetMapping("/{fundCode}/nav-history")
     public ApiResponse<List<FundNavVO>> navHistory(@PathVariable String fundCode,
-                                                   @RequestParam(defaultValue = "30") int limit) {
-        return ApiResponse.ok(fundService.navHistory(fundCode, limit));
+                                                   @RequestParam(defaultValue = "6m") String range) {
+        return ApiResponse.ok(fundService.navHistory(fundCode, range));
+    }
+
+    @GetMapping("/{fundCode}/holdings")
+    public ApiResponse<List<FundHoldingItemVO>> holdings(@PathVariable String fundCode,
+                                                         @RequestParam(required = false) Integer year,
+                                                         @RequestParam(required = false) Integer quarter) {
+        return ApiResponse.ok(fundService.holdings(fundCode, year, quarter));
     }
 }

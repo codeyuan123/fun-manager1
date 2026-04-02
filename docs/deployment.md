@@ -52,13 +52,14 @@
 
 ## 7. 初始化步骤
 
-1. 安装 MariaDB、Redis、Maven
-2. 创建应用目录、运行用户和日志目录
-3. 初始化数据库与应用账号
-4. 生成服务端环境变量文件
-5. 配置 Nginx 站点
-6. 配置 systemd 托管 Spring Boot
-7. 验证数据库和 Redis 连通性
+1. 中国网络环境默认执行 `MIRROR_PROFILE=cn bash scripts/server_bootstrap_debian.sh`，脚本会切到 `TUNA` Debian 源；如服务器不在国内可显式改为 `MIRROR_PROFILE=global`
+2. 安装 MariaDB、Redis、Maven
+3. 创建应用目录、运行用户和日志目录
+4. 初始化数据库与应用账号
+5. 生成服务端环境变量文件
+6. 配置 Nginx 站点
+7. 配置 systemd 托管 Spring Boot
+8. 验证数据库和 Redis 连通性
 
 ## 8. 数据库规划
 
@@ -85,3 +86,47 @@
 ## 10. 说明
 
 本文档已结合当前服务器实际情况整理，可直接作为服务器初始化与后续部署基线。
+
+补充说明：
+
+- 前端依赖默认通过 `frontend/.npmrc` 使用 `https://registry.npmmirror.com/`
+- 后端 Maven 构建默认通过 `backend/.mvn/settings.xml` 使用 `https://maven.aliyun.com/repository/public`
+- Windows 本地运行可使用 `scripts/start_local_mariadb.ps1`、`scripts/run_local_backend.ps1`、`scripts/run_local_frontend.ps1`
+
+## 11. Windows 本地运行基线
+
+本地推荐目录：
+
+```text
+C:\pro\runtime\
+  apache-maven-3.9.14\
+  jdk-17.0.18+8\
+  mariadb-10.11.16-winx64\
+  mariadb-data\
+```
+
+当前已验证的本地版本：
+
+- `Node.js 24`
+- `Maven 3.9.14`
+- `Temurin JDK 17`
+- `MariaDB 10.11`
+
+本地启动顺序：
+
+1. 执行 `powershell -ExecutionPolicy Bypass -File C:\pro\fun-manager1\scripts\start_local_mariadb.ps1`
+2. 执行 `powershell -ExecutionPolicy Bypass -File C:\pro\fun-manager1\scripts\run_local_backend.ps1`
+3. 执行 `powershell -ExecutionPolicy Bypass -File C:\pro\fun-manager1\scripts\run_local_frontend.ps1`
+
+说明：
+
+- 本地后端默认使用 `SPRING_PROFILES_ACTIVE=local`
+- `local` profile 会禁用 Redis 自动装配，本地不强制安装 Redis
+- 本地数据库账号：
+  - root：`root_local_password`
+  - 应用用户：`fund_app`
+  - 应用库：`fund_manager`
+- 默认登录账号：`admin / admin123`
+- 本地访问地址：
+  - 前端：`http://127.0.0.1:5173`
+  - 后端：`http://127.0.0.1:18080`

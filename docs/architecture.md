@@ -9,7 +9,7 @@
 - 管理自选基金池
 - 通过数据看板展示持仓分布、收益走势、风险暴露和基金表现
 - 将数据库、缓存、反向代理和最终运行环境统一部署在远程服务器 `<server-ip>`
-- 本地仅承担编码职责，运行环境统一落在服务器
+- 本地支持完整开发运行，生产环境统一部署在远程服务器
 
 ## 2. 技术选型
 
@@ -27,7 +27,7 @@
 
 - 语言：Java 17
 - 框架：Spring Boot 3.x
-- ORM：MyBatis-Plus
+- ORM：Spring Data JPA
 - 安全：Spring Security + JWT
 - 任务调度：Spring Scheduling
 - 构建：Maven
@@ -167,6 +167,7 @@
 - 编码
 - 构建
 - 单元测试
+- 启动 MariaDB、本地后端和前端进行联调
 
 ### 服务器
 
@@ -185,7 +186,7 @@
 - 服务器系统为 `Debian 12`
 - 已存在 `OpenJDK 17`、`Node.js 22`、`Nginx`
 - 当前 Nginx 已启用站点已被停用，后续由本项目独占 `80` 端口入口
-- 当前服务器不存在 `MariaDB`、`Redis`、`Maven`
+- 当前服务器已经安装并运行 `MariaDB`、`Redis`、`Maven`
 
 因此第一阶段采用以下适配策略：
 
