@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import {
   CollectionTag,
   Fold,
   House,
+  Key,
   Moon,
   Search,
   Setting,
@@ -16,8 +18,10 @@ import { useAuthStore } from '../stores/auth'
 import { useAppStore } from '../stores/app'
 import { meApi, searchFundApi } from '../api/modules'
 import type { FundSearchItem } from '../types/api'
+import ChangePasswordDialog from './ChangePasswordDialog.vue'
 import AppSettingsDrawer from './AppSettingsDrawer.vue'
 import AppTabs from './AppTabs.vue'
+import SessionTimeoutDialog from './SessionTimeoutDialog.vue'
 
 interface SearchOption extends FundSearchItem {
   value: string
@@ -44,6 +48,7 @@ const searchInput = ref('')
 const isMobile = ref(false)
 const mobileNavVisible = ref(false)
 const settingsVisible = ref(false)
+const changePasswordVisible = ref(false)
 
 const iconMap = {
   House,
@@ -172,6 +177,10 @@ const handleResize = () => {
   }
 }
 
+const activityHandler = () => {
+  authStore.markActivity()
+}
+
 const onToggleSidebar = () => {
   if (isMobile.value) {
     mobileNavVisible.value = true
@@ -184,12 +193,15 @@ const onCommand = (command: string) => {
   if (command === 'logout') {
     authStore.logout()
     router.push('/login')
+  } else if (command === 'change-password') {
+    changePasswordVisible.value = true
   }
 }
 
 watch(
   () => route.fullPath,
   () => {
+    authStore.markActivity(true)
     if (!route.meta.ignoreTab) {
       appStore.addTab({
         path: route.path,
@@ -212,11 +224,30 @@ watch(
 
 onMounted(() => {
   handleResize()
+  if (!authStore.ensureSession()) {
+    router.replace('/login')
+  } else {
+    authStore.startSessionMonitor(() => {
+      ElMessage.error('登录已超时，请重新登录')
+      router.replace('/login')
+    })
+  }
   window.addEventListener('resize', handleResize)
+  window.addEventListener('fm-session-activity', activityHandler)
+  window.addEventListener('mousemove', activityHandler)
+  window.addEventListener('mousedown', activityHandler)
+  window.addEventListener('keydown', activityHandler)
+  window.addEventListener('scroll', activityHandler, true)
 })
 
 onBeforeUnmount(() => {
+  authStore.stopSessionMonitor()
   window.removeEventListener('resize', handleResize)
+  window.removeEventListener('fm-session-activity', activityHandler)
+  window.removeEventListener('mousemove', activityHandler)
+  window.removeEventListener('mousedown', activityHandler)
+  window.removeEventListener('keydown', activityHandler)
+  window.removeEventListener('scroll', activityHandler, true)
 })
 
 if (authStore.token && !authStore.user) {
@@ -334,6 +365,11 @@ if (authStore.token && !authStore.user) {
             </el-button>
           </el-tooltip>
 
+          <el-button text class="app-header-icon app-password-button" @click="changePasswordVisible = true">
+            <el-icon><Key /></el-icon>
+            <span>修改密码</span>
+          </el-button>
+
           <el-dropdown @command="onCommand">
             <div class="app-user">
               <div class="app-user-avatar">{{ (authStore.user?.nickname || authStore.user?.username || 'U').slice(0, 1) }}</div>
@@ -344,6 +380,7 @@ if (authStore.token && !authStore.user) {
             </div>
             <template #dropdown>
               <el-dropdown-menu>
+                <el-dropdown-item command="change-password">修改密码</el-dropdown-item>
                 <el-dropdown-item command="logout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -367,5 +404,27 @@ if (authStore.token && !authStore.user) {
     </div>
 
     <AppSettingsDrawer v-model="settingsVisible" />
+    <ChangePasswordDialog
+      v-model="changePasswordVisible"
+      @success="
+        () => {
+          authStore.logout()
+          ElMessage.success('密码已修改，请重新登录')
+          router.replace('/login')
+        }
+      "
+    />
+    <SessionTimeoutDialog
+      :model-value="authStore.sessionWarningVisible"
+      :remaining-seconds="authStore.sessionRemainingSeconds"
+      @update:model-value="() => undefined"
+      @continue="authStore.continueSession"
+      @logout="
+        () => {
+          authStore.logout()
+          router.replace('/login')
+        }
+      "
+    />
   </div>
 </template>

@@ -74,6 +74,7 @@ frontend/
 
 - `POST /api/auth/login`
 - `GET /api/auth/me`
+- `POST /api/auth/change-password`
 
 ### 4.2 基金
 
@@ -101,6 +102,13 @@ frontend/
 - `GET /api/dashboard/trend`
 - `GET /api/dashboard/distribution`
 - `GET /api/dashboard/ranking`
+
+### 4.6 会话与鉴权行为
+
+- 所有非公开接口都要求携带 JWT，鉴权失败统一返回 `401`
+- 前端收到 `401` 时统一清理登录态并重定向到 `/login`
+- 会话超时策略：默认 30 分钟无活动超时，剩余 5 分钟弹出续期提醒
+- 用户活动会更新本地会话活跃时间，点击“继续会话”立即续期
 
 ## 5. 数据库表设计
 

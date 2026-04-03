@@ -1,6 +1,7 @@
 package com.fundmanager.controller;
 
 import com.fundmanager.common.ApiResponse;
+import com.fundmanager.domain.dto.ChangePasswordRequest;
 import com.fundmanager.domain.dto.LoginRequest;
 import com.fundmanager.domain.vo.LoginVO;
 import com.fundmanager.service.AuthService;
@@ -32,5 +33,12 @@ public class AuthController {
     @GetMapping("/me")
     public ApiResponse<Map<String, Object>> me(Authentication authentication) {
         return ApiResponse.ok(authService.me(authentication.getName()));
+    }
+
+    @PostMapping("/change-password")
+    public ApiResponse<Void> changePassword(Authentication authentication,
+                                           @Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(authentication.getName(), request);
+        return ApiResponse.ok();
     }
 }

@@ -247,6 +247,16 @@ select {
   font-size: 18px;
 }
 
+.app-password-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.app-password-button span {
+  font-size: 13px;
+}
+
 .app-header-right {
   min-width: 0;
 }

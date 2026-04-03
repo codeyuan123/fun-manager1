@@ -119,6 +119,7 @@ router.beforeEach((to) => {
   const auth = useAuthStore()
   if (to.meta.public) return true
   if (!auth.token) return '/login'
+  if (!auth.ensureSession()) return '/login'
   return true
 })
 

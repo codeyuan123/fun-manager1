@@ -25,6 +25,12 @@ export const loginApi = (payload: { username: string; password: string }) =>
 
 export const meApi = () => http.get<ApiResponse<UserInfo>>('/auth/me')
 
+export const changePasswordApi = (payload: {
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
+}) => http.post<ApiResponse<null>>('/auth/change-password', payload)
+
 export const positionsApi = () => http.get<ApiResponse<PositionItem[]>>('/positions')
 
 export const buyApi = (payload: {
