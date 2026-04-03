@@ -25,6 +25,18 @@ public class FundEstimate {
     @Column(name = "estimate_growth_rate", precision = 10, scale = 4)
     private BigDecimal estimateGrowthRate;
 
+    @Column(name = "estimate_source", length = 32)
+    private String estimateSource;
+
+    @Column(name = "estimate_confidence", length = 16)
+    private String estimateConfidence;
+
+    @Column(name = "holding_coverage_rate", precision = 10, scale = 4)
+    private BigDecimal holdingCoverageRate;
+
+    @Column(name = "quoted_coverage_rate", precision = 10, scale = 4)
+    private BigDecimal quotedCoverageRate;
+
     @Column(length = 64)
     private String source;
 
@@ -65,6 +77,38 @@ public class FundEstimate {
 
     public void setEstimateGrowthRate(BigDecimal estimateGrowthRate) {
         this.estimateGrowthRate = estimateGrowthRate;
+    }
+
+    public String getEstimateSource() {
+        return estimateSource;
+    }
+
+    public void setEstimateSource(String estimateSource) {
+        this.estimateSource = estimateSource;
+    }
+
+    public String getEstimateConfidence() {
+        return estimateConfidence;
+    }
+
+    public void setEstimateConfidence(String estimateConfidence) {
+        this.estimateConfidence = estimateConfidence;
+    }
+
+    public BigDecimal getHoldingCoverageRate() {
+        return holdingCoverageRate;
+    }
+
+    public void setHoldingCoverageRate(BigDecimal holdingCoverageRate) {
+        this.holdingCoverageRate = holdingCoverageRate;
+    }
+
+    public BigDecimal getQuotedCoverageRate() {
+        return quotedCoverageRate;
+    }
+
+    public void setQuotedCoverageRate(BigDecimal quotedCoverageRate) {
+        this.quotedCoverageRate = quotedCoverageRate;
     }
 
     public String getSource() {

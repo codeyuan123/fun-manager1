@@ -12,6 +12,10 @@ public record FundQuoteSnapshot(
         LocalDate latestNavDate,
         BigDecimal previousNav,
         BigDecimal estimateGrowthRate,
-        LocalDateTime estimateTime
+        LocalDateTime estimateTime,
+        String estimateSource,
+        String estimateConfidence,
+        BigDecimal holdingCoverageRate,
+        BigDecimal quotedCoverageRate
 ) {
 }

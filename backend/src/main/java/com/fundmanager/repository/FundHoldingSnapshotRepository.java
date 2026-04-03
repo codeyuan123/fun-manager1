@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface FundHoldingSnapshotRepository extends JpaRepository<FundHoldingSnapshot, Long> {
+    List<FundHoldingSnapshot> findByFundCodeOrderByYearNumDescQuarterNumDescNavRatioDesc(String fundCode);
+
     List<FundHoldingSnapshot> findByFundCodeAndYearNumAndQuarterNumOrderByNavRatioDesc(
             String fundCode,
             Integer yearNum,

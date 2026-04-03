@@ -8,6 +8,7 @@ import {
   fundDetailApi,
   fundHoldingsApi,
   fundNavHistoryApi,
+  refreshEstimatesApi,
   removeWatchApi,
   watchlistApi,
 } from '../../api/modules'
@@ -19,7 +20,18 @@ import type {
   FundPerformanceRadar,
   WatchlistItem,
 } from '../../types/api'
-import { clsByNumber, fundTypeLabel, money, navRangeLabel, percent, returnLabel } from '../../utils/format'
+import {
+  clsByNumber,
+  estimateConfidenceLabel,
+  estimateConfidenceType,
+  estimateSourceLabel,
+  fundTypeLabel,
+  money,
+  navRangeLabel,
+  percent,
+  ratioPercent,
+  returnLabel,
+} from '../../utils/format'
 
 type NavRange = '1m' | '3m' | '6m' | '1y' | 'max'
 
@@ -44,6 +56,11 @@ const detail = ref<FundDetail>({
   estimateNav: null,
   estimateGrowthRate: null,
   estimateTime: null,
+  estimateSource: null,
+  estimateConfidence: null,
+  holdingCoverageRate: null,
+  quotedCoverageRate: null,
+  estimateUpdatedAt: null,
   sourceRate: null,
   currentRate: null,
   minPurchaseAmount: null,
@@ -70,10 +87,10 @@ const scaleChart = useEChart()
 
 const yearOptions = computed(() => Array.from({ length: 6 }, (_, index) => currentDate.getFullYear() - index))
 const quarterOptions = [
-  { value: 1, label: '一季度' },
-  { value: 2, label: '二季度' },
-  { value: 3, label: '三季度' },
-  { value: 4, label: '四季度' },
+  { value: 1, label: 'Q1' },
+  { value: 2, label: 'Q2' },
+  { value: 3, label: 'Q3' },
+  { value: 4, label: 'Q4' },
 ]
 const watchSet = computed(() => new Set(watchlist.value.map((item) => item.fundCode)))
 const isWatched = computed(() => watchSet.value.has(code.value))
@@ -109,35 +126,27 @@ const loadHoldings = async () => {
 }
 
 const renderCharts = async () => {
-  const navDates = navHistory.value.map((item) => item.navDate.slice(5))
-  const navValues = navHistory.value.map((item) => Number(item.unitNav || 0))
   await navChart.setOption({
-    animationDuration: 500,
-    grid: { left: 28, right: 18, top: 24, bottom: 28 },
-    tooltip: {
-      trigger: 'axis',
-      backgroundColor: '#08111d',
-      borderColor: 'rgba(125, 211, 252, 0.2)',
-      textStyle: { color: '#d7e6f5' },
-    },
+    animationDuration: 400,
+    grid: { left: 20, right: 12, top: 20, bottom: 20 },
+    tooltip: { trigger: 'axis' },
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: navDates,
-      axisLine: { lineStyle: { color: 'rgba(138,170,208,0.18)' } },
-      axisLabel: { color: '#8aaad0' },
+      data: navHistory.value.map((item) => item.navDate.slice(5)),
+      axisLabel: { color: '#86909c' },
     },
     yAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: 'rgba(138,170,208,0.08)' } },
-      axisLabel: { color: '#8aaad0' },
+      splitLine: { lineStyle: { color: '#edf2f8' } },
+      axisLabel: { color: '#86909c' },
     },
     series: [
       {
         type: 'line',
         smooth: true,
         showSymbol: false,
-        lineStyle: { color: '#7dd3fc', width: 2.5 },
+        lineStyle: { color: '#1677ff', width: 2.5 },
         areaStyle: {
           color: {
             type: 'linear',
@@ -146,30 +155,30 @@ const renderCharts = async () => {
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: 'rgba(125, 211, 252, 0.28)' },
-              { offset: 1, color: 'rgba(125, 211, 252, 0.03)' },
+              { offset: 0, color: 'rgba(22, 119, 255, 0.24)' },
+              { offset: 1, color: 'rgba(22, 119, 255, 0.05)' },
             ],
           },
         },
-        data: navValues,
+        data: navHistory.value.map((item) => Number(item.unitNav || 0)),
       },
     ],
   })
 
   await radarChart.setOption({
-    animationDuration: 500,
+    animationDuration: 400,
     radar: {
       indicator: managerRadar.value.categories.map((label) => ({ name: label, max: 100 })),
-      splitLine: { lineStyle: { color: 'rgba(138,170,208,0.16)' } },
-      splitArea: { areaStyle: { color: ['rgba(125, 211, 252, 0.02)', 'rgba(125, 211, 252, 0.04)'] } },
-      axisName: { color: '#8aaad0' },
+      splitLine: { lineStyle: { color: '#e7edf4' } },
+      splitArea: { areaStyle: { color: ['#fbfdff', '#f5f8fc'] } },
+      axisName: { color: '#86909c' },
     },
     series: [
       {
         type: 'radar',
         symbol: 'none',
-        areaStyle: { color: 'rgba(245, 158, 11, 0.26)' },
-        lineStyle: { color: '#f59e0b' },
+        areaStyle: { color: 'rgba(22, 119, 255, 0.18)' },
+        lineStyle: { color: '#1677ff' },
         data: [
           {
             value: managerRadar.value.data.map((value) => Number(value || 0)),
@@ -181,28 +190,19 @@ const renderCharts = async () => {
   })
 
   await allocationChart.setOption({
-    animationDuration: 500,
-    tooltip: {
-      trigger: 'axis',
-      backgroundColor: '#08111d',
-      borderColor: 'rgba(125, 211, 252, 0.2)',
-      textStyle: { color: '#d7e6f5' },
-    },
-    legend: {
-      top: 0,
-      textStyle: { color: '#8aaad0' },
-    },
-    grid: { left: 28, right: 18, top: 46, bottom: 24 },
+    animationDuration: 400,
+    tooltip: { trigger: 'axis' },
+    legend: { top: 0, textStyle: { color: '#86909c' } },
+    grid: { left: 20, right: 12, top: 42, bottom: 20 },
     xAxis: {
       type: 'category',
       data: detail.value.assetAllocation.categories,
-      axisLine: { lineStyle: { color: 'rgba(138,170,208,0.18)' } },
-      axisLabel: { color: '#8aaad0' },
+      axisLabel: { color: '#86909c' },
     },
     yAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: 'rgba(138,170,208,0.08)' } },
-      axisLabel: { color: '#8aaad0' },
+      splitLine: { lineStyle: { color: '#edf2f8' } },
+      axisLabel: { color: '#86909c' },
     },
     series: detail.value.assetAllocation.series.map((series, index) => ({
       type: index === detail.value.assetAllocation.series.length - 1 ? 'line' : 'bar',
@@ -210,40 +210,34 @@ const renderCharts = async () => {
       name: series.name || `系列${index + 1}`,
       data: series.data.map((value) => Number(value || 0)),
       itemStyle: {
-        color: ['#7dd3fc', '#22c55e', '#f59e0b', '#a78bfa'][index % 4],
+        color: ['#1677ff', '#52c41a', '#faad14', '#722ed1'][index % 4],
       },
       lineStyle: {
-        color: ['#7dd3fc', '#22c55e', '#f59e0b', '#a78bfa'][index % 4],
+        color: ['#1677ff', '#52c41a', '#faad14', '#722ed1'][index % 4],
       },
     })),
   })
 
   await scaleChart.setOption({
-    animationDuration: 500,
-    tooltip: {
-      trigger: 'axis',
-      backgroundColor: '#08111d',
-      borderColor: 'rgba(125, 211, 252, 0.2)',
-      textStyle: { color: '#d7e6f5' },
-    },
-    grid: { left: 28, right: 18, top: 22, bottom: 26 },
+    animationDuration: 400,
+    tooltip: { trigger: 'axis' },
+    grid: { left: 20, right: 12, top: 20, bottom: 20 },
     xAxis: {
       type: 'category',
       data: detail.value.scaleTrend.map((item) => item.date),
-      axisLabel: { color: '#8aaad0' },
-      axisLine: { lineStyle: { color: 'rgba(138,170,208,0.18)' } },
+      axisLabel: { color: '#86909c' },
     },
     yAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: 'rgba(138,170,208,0.08)' } },
-      axisLabel: { color: '#8aaad0' },
+      splitLine: { lineStyle: { color: '#edf2f8' } },
+      axisLabel: { color: '#86909c' },
     },
     series: [
       {
         type: 'bar',
-        barWidth: 20,
+        barWidth: 18,
         data: detail.value.scaleTrend.map((item) => Number(item.value || 0)),
-        itemStyle: { color: '#f97316' },
+        itemStyle: { color: '#13c2c2' },
       },
     ],
   })
@@ -270,7 +264,7 @@ const reloadNav = async (range: NavRange) => {
     await loadNavHistory()
     await renderCharts()
   } catch (error: any) {
-    ElMessage.error(error?.message || '净值走势加载失败')
+    ElMessage.error(error?.message || '净值加载失败')
   }
 }
 
@@ -278,7 +272,7 @@ const reloadHoldings = async () => {
   try {
     await loadHoldings()
   } catch (error: any) {
-    ElMessage.error(error?.message || '季度持仓加载失败')
+    ElMessage.error(error?.message || '持仓加载失败')
   }
 }
 
@@ -293,7 +287,17 @@ const toggleWatch = async () => {
     }
     await loadWatchlist()
   } catch (error: any) {
-    ElMessage.error(error?.message || '自选操作失败')
+    ElMessage.error(error?.message || '操作失败')
+  }
+}
+
+const refreshEstimate = async () => {
+  try {
+    await refreshEstimatesApi([code.value])
+    await load()
+    ElMessage.success('估值已刷新')
+  } catch (error: any) {
+    ElMessage.error(error?.message || '估值刷新失败')
   }
 }
 
@@ -344,18 +348,18 @@ onBeforeUnmount(() => {
   <div class="terminal-page" v-loading="loading">
     <section class="headline-panel headline-panel-detail">
       <div>
-        <span class="eyebrow">基金详情</span>
+        <span class="eyebrow">Fund</span>
         <h2>{{ detail.fundName || code }} <small>{{ detail.fundCode }}</small></h2>
         <p class="terminal-subline">
-          {{ fundTypeLabel(detail.fundType) }}
-          <span>·</span>
-          <span>{{ detail.managementCompany || '基金公司待补充' }}</span>
+          <span>{{ fundTypeLabel(detail.fundType) }}</span>
+          <span>{{ detail.managementCompany || '--' }}</span>
         </p>
       </div>
       <div class="headline-actions">
         <el-button :type="isWatched ? 'info' : 'primary'" @click="toggleWatch">
-          {{ isWatched ? '移除自选' : '加入自选' }}
+          {{ isWatched ? '已加入自选' : '加入自选' }}
         </el-button>
+        <el-button @click="refreshEstimate">刷新估值</el-button>
         <el-button type="primary" @click="openTrade('BUY')">买入</el-button>
         <el-button type="danger" plain @click="openTrade('SELL')">卖出</el-button>
       </div>
@@ -363,40 +367,66 @@ onBeforeUnmount(() => {
 
     <section class="metric-grid">
       <article class="metric-card">
-        <span>预估净值</span>
+        <span>估值</span>
         <strong>{{ money(detail.estimateNav) }}</strong>
       </article>
       <article class="metric-card">
-        <span>预估涨跌</span>
+        <span>涨跌</span>
         <strong :class="clsByNumber((detail.estimateGrowthRate || 0) / 100)">
           {{ percent((detail.estimateGrowthRate || 0) / 100) }}
         </strong>
       </article>
       <article class="metric-card">
-        <span>最新净值</span>
+        <span>净值</span>
         <strong>{{ money(detail.latestNav) }}</strong>
       </article>
       <article class="metric-card">
-        <span>申购费率</span>
+        <span>费率</span>
         <strong>{{ detail.currentRate == null ? '--' : `${detail.currentRate}%` }}</strong>
       </article>
       <article class="metric-card">
-        <span>起购金额</span>
+        <span>起购</span>
         <strong>{{ detail.minPurchaseAmount == null ? '--' : money(detail.minPurchaseAmount) }}</strong>
       </article>
       <article class="metric-card">
-        <span>综合评分</span>
+        <span>评分</span>
         <strong>{{ detail.performanceRadar.average || '--' }}</strong>
       </article>
+    </section>
+
+    <section class="terminal-panel">
+      <div class="panel-head">
+        <h3>估值说明</h3>
+      </div>
+      <div class="candidate-grid">
+        <article class="candidate-card">
+          <div>
+            <strong>来源</strong>
+            <span>{{ detail.estimateSource === 'self_holdings' ? '基于最近披露持仓近似估值' : '当前按第三方估值展示' }}</span>
+          </div>
+          <el-tag :type="detail.estimateSource === 'self_holdings' ? 'success' : 'info'">
+            {{ estimateSourceLabel(detail.estimateSource) }}
+          </el-tag>
+        </article>
+        <article class="candidate-card">
+          <div>
+            <strong>可信度</strong>
+            <span>
+              持仓覆盖 {{ ratioPercent(detail.holdingCoverageRate) }} / 行情覆盖 {{ ratioPercent(detail.quotedCoverageRate) }}
+              <template v-if="detail.estimateUpdatedAt"> / {{ detail.estimateUpdatedAt }}</template>
+            </span>
+          </div>
+          <el-tag :type="estimateConfidenceType(detail.estimateConfidence)">
+            {{ estimateConfidenceLabel(detail.estimateConfidence) }}
+          </el-tag>
+        </article>
+      </div>
     </section>
 
     <section class="terminal-grid terminal-grid-two">
       <article class="terminal-panel terminal-panel-large">
         <div class="panel-head">
-          <div>
-            <span class="panel-kicker">净值走势</span>
-            <h3>历史单位净值</h3>
-          </div>
+          <h3>净值走势</h3>
           <div class="range-switch">
             <button
               v-for="item in ['1m', '3m', '6m', '1y', 'max']"
@@ -413,10 +443,7 @@ onBeforeUnmount(() => {
 
       <article class="terminal-panel">
         <div class="panel-head">
-          <div>
-            <span class="panel-kicker">能力雷达</span>
-            <h3>基金经理能力视图</h3>
-          </div>
+          <h3>经理雷达</h3>
         </div>
         <div :ref="radarChart.elementRef" class="chart-box" />
       </article>
@@ -425,10 +452,7 @@ onBeforeUnmount(() => {
     <section class="terminal-grid terminal-grid-two">
       <article class="terminal-panel">
         <div class="panel-head">
-          <div>
-            <span class="panel-kicker">阶段收益</span>
-            <h3>区间表现</h3>
-          </div>
+          <h3>阶段收益</h3>
         </div>
         <div class="stat-strip">
           <div v-for="item in detail.returnStats" :key="item.label" class="stat-pill">
@@ -456,10 +480,7 @@ onBeforeUnmount(() => {
 
       <article class="terminal-panel">
         <div class="panel-head">
-          <div>
-            <span class="panel-kicker">资产配置</span>
-            <h3>资产结构趋势</h3>
-          </div>
+          <h3>资产配置</h3>
         </div>
         <div :ref="allocationChart.elementRef" class="chart-box" />
       </article>
@@ -468,20 +489,14 @@ onBeforeUnmount(() => {
     <section class="terminal-grid terminal-grid-two">
       <article class="terminal-panel">
         <div class="panel-head">
-          <div>
-            <span class="panel-kicker">基金规模</span>
-            <h3>基金规模变化</h3>
-          </div>
+          <h3>规模变化</h3>
         </div>
         <div :ref="scaleChart.elementRef" class="chart-box" />
       </article>
 
       <article class="terminal-panel">
         <div class="panel-head">
-          <div>
-            <span class="panel-kicker">基金经理</span>
-            <h3>现任经理信息</h3>
-          </div>
+          <h3>基金经理</h3>
         </div>
         <div class="manager-grid">
           <article
@@ -490,7 +505,7 @@ onBeforeUnmount(() => {
             class="manager-card"
           >
             <div class="manager-head">
-              <img v-if="manager.avatar" :src="manager.avatar" :alt="manager.name || '基金经理'" />
+              <img v-if="manager.avatar" :src="manager.avatar" :alt="manager.name || '经理'" />
               <div>
                 <strong>{{ manager.name || '未知经理' }}</strong>
                 <span>{{ manager.workTime || '--' }}</span>
@@ -510,15 +525,12 @@ onBeforeUnmount(() => {
 
     <section class="terminal-panel">
       <div class="panel-head">
-        <div>
-          <span class="panel-kicker">季度持仓</span>
-          <h3>重仓股明细</h3>
-        </div>
+        <h3>季度持仓</h3>
         <div class="selector-row">
-          <el-select v-model="holdingYear" style="width: 120px">
+          <el-select v-model="holdingYear" style="width: 100px">
             <el-option v-for="year in yearOptions" :key="year" :label="year" :value="year" />
           </el-select>
-          <el-select v-model="holdingQuarter" style="width: 120px">
+          <el-select v-model="holdingQuarter" style="width: 90px">
             <el-option
               v-for="option in quarterOptions"
               :key="option.value"
@@ -529,7 +541,7 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <el-table :data="holdings" class="terminal-table" size="small" empty-text="该季度暂无持仓">
+      <el-table :data="holdings" class="terminal-table" size="small" empty-text="暂无季度持仓">
         <el-table-column label="股票" min-width="220">
           <template #default="{ row }">
             <div class="stock-cell">
@@ -538,25 +550,22 @@ onBeforeUnmount(() => {
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="净值占比" width="120" align="right">
+        <el-table-column label="占比" width="100" align="right">
           <template #default="{ row }">{{ row.navRatio == null ? '--' : `${Number(row.navRatio).toFixed(2)}%` }}</template>
         </el-table-column>
-        <el-table-column label="持股数" width="120" align="right">
+        <el-table-column label="股数" width="110" align="right">
           <template #default="{ row }">{{ row.holdingShares == null ? '--' : Number(row.holdingShares).toFixed(2) }}</template>
         </el-table-column>
-        <el-table-column label="持仓市值" width="150" align="right">
+        <el-table-column label="市值" width="130" align="right">
           <template #default="{ row }">{{ money(row.holdingMarketValue) }}</template>
         </el-table-column>
-        <el-table-column prop="reportDate" label="报告期" width="120" />
+        <el-table-column prop="reportDate" label="报告期" width="110" />
       </el-table>
     </section>
 
     <section class="terminal-panel">
       <div class="panel-head">
-        <div>
-          <span class="panel-kicker">同类参考</span>
-          <h3>同类基金参考</h3>
-        </div>
+        <h3>同类基金</h3>
       </div>
       <div class="peer-grid">
         <button

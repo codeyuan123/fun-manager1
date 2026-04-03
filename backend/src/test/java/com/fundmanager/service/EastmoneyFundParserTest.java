@@ -88,6 +88,8 @@ class EastmoneyFundParserTest {
 
         EastmoneyHoldingPayload payload = parser.parseHoldingsResponse("161725", 2025, 4, body);
 
+        assertEquals(2025, payload.year());
+        assertEquals(4, payload.quarter());
         assertEquals(LocalDate.of(2025, 12, 31), payload.reportDate());
         assertEquals(1, payload.items().size());
         assertEquals("600519", payload.items().get(0).stockCode());

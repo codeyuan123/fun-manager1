@@ -8,6 +8,11 @@ public record FundEstimateVO(
         String fundName,
         BigDecimal estimateNav,
         BigDecimal estimateGrowthRate,
-        LocalDateTime estimateTime
+        LocalDateTime estimateTime,
+        String estimateSource,
+        String estimateConfidence,
+        BigDecimal holdingCoverageRate,
+        BigDecimal quotedCoverageRate,
+        LocalDateTime estimateUpdatedAt
 ) {
 }

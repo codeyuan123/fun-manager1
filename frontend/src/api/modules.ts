@@ -3,6 +3,7 @@ import type {
   ApiResponse,
   DashboardOverview,
   DistributionItem,
+  EstimateRefreshSummary,
   FundDetail,
   FundEstimate,
   FundHoldingItem,
@@ -62,6 +63,9 @@ export const trendApi = () => http.get<ApiResponse<TrendPoint[]>>('/dashboard/tr
 export const distributionApi = () => http.get<ApiResponse<DistributionItem[]>>('/dashboard/distribution')
 
 export const rankingApi = () => http.get<ApiResponse<RankingPayload>>('/dashboard/ranking')
+
+export const refreshEstimatesApi = (fundCodes?: string[]) =>
+  http.post<ApiResponse<EstimateRefreshSummary>>('/estimates/refresh', fundCodes?.length ? { fundCodes } : {})
 
 export const searchFundApi = (keyword: string) =>
   http.get<ApiResponse<FundSearchItem[]>>('/funds/search', { params: { keyword } })

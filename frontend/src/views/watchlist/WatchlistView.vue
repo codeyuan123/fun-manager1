@@ -2,9 +2,16 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { addWatchApi, removeWatchApi, searchFundApi, watchlistApi } from '../../api/modules'
+import { addWatchApi, refreshEstimatesApi, removeWatchApi, searchFundApi, watchlistApi } from '../../api/modules'
 import type { FundSearchItem, WatchlistItem } from '../../types/api'
-import { clsByNumber, fundTypeLabel, money, percent } from '../../utils/format'
+import {
+  clsByNumber,
+  estimateConfidenceLabel,
+  estimateConfidenceType,
+  estimateSourceLabel,
+  fundTypeLabel,
+  percent,
+} from '../../utils/format'
 
 const router = useRouter()
 const loading = ref(false)
@@ -21,7 +28,7 @@ const load = async () => {
     const response = await watchlistApi()
     watchlist.value = response.data.data
   } catch (error: any) {
-    ElMessage.error(error?.message || '自选列表加载失败')
+    ElMessage.error(error?.message || '自选加载失败')
   } finally {
     loading.value = false
   }
@@ -38,7 +45,7 @@ const search = async () => {
     const response = await searchFundApi(value)
     candidates.value = response.data.data
   } catch (error: any) {
-    ElMessage.error(error?.message || '基金搜索失败')
+    ElMessage.error(error?.message || '搜索失败')
   } finally {
     searchLoading.value = false
   }
@@ -47,20 +54,21 @@ const search = async () => {
 const add = async (fundCode: string) => {
   try {
     await addWatchApi(fundCode)
+    await refreshEstimatesApi([fundCode])
     ElMessage.success('已加入自选')
     await load()
   } catch (error: any) {
-    ElMessage.error(error?.message || '加入自选失败')
+    ElMessage.error(error?.message || '加入失败')
   }
 }
 
 const remove = async (fundCode: string) => {
   try {
     await removeWatchApi(fundCode)
-    ElMessage.success('已移除自选')
+    ElMessage.success('已移除')
     await load()
   } catch (error: any) {
-    ElMessage.error(error?.message || '移除自选失败')
+    ElMessage.error(error?.message || '移除失败')
   }
 }
 
@@ -75,8 +83,8 @@ load()
   <div class="terminal-page" v-loading="loading">
     <section class="headline-panel">
       <div>
-        <span class="eyebrow">自选池</span>
-        <h2>跟踪你关注的基金，并快速跳转到完整详情页。</h2>
+        <span class="eyebrow">Watchlist</span>
+        <h2>自选基金</h2>
       </div>
       <div class="headline-actions">
         <el-button @click="load">刷新</el-button>
@@ -85,14 +93,11 @@ load()
 
     <section class="terminal-panel">
       <div class="panel-head">
-        <div>
-          <span class="panel-kicker">基金搜索</span>
-          <h3>搜索公募基金</h3>
-        </div>
+        <h3>基金搜索</h3>
       </div>
 
       <div class="search-strip">
-        <el-input v-model="keyword" placeholder="输入基金代码或名称" clearable @keyup.enter="search" />
+        <el-input v-model="keyword" placeholder="代码 / 名称" clearable @keyup.enter="search" />
         <el-button type="primary" :loading="searchLoading" @click="search">搜索</el-button>
       </div>
 
@@ -108,7 +113,7 @@ load()
             :type="watchedCodes.has(item.fundCode) ? 'info' : 'primary'"
             @click="watchedCodes.has(item.fundCode) ? remove(item.fundCode) : add(item.fundCode)"
           >
-            {{ watchedCodes.has(item.fundCode) ? '移除' : '加入自选' }}
+            {{ watchedCodes.has(item.fundCode) ? '移除' : '加入' }}
           </el-button>
         </article>
       </div>
@@ -116,14 +121,11 @@ load()
 
     <section class="terminal-panel">
       <div class="panel-head">
-        <div>
-          <span class="panel-kicker">实时跟踪</span>
-          <h3>自选基金行情</h3>
-        </div>
+        <h3>自选列表</h3>
       </div>
 
-      <el-table :data="watchlist" class="terminal-table clickable-table" size="small" empty-text="暂无自选基金">
-        <el-table-column label="基金" min-width="240">
+      <el-table :data="watchlist" class="terminal-table clickable-table" size="small" empty-text="暂无自选">
+        <el-table-column label="基金" min-width="220">
           <template #default="{ row }">
             <button class="fund-link-button" @click="openFund(row.fundCode)">
               <strong>{{ row.fundCode }}</strong>
@@ -132,16 +134,30 @@ load()
             </button>
           </template>
         </el-table-column>
-        <el-table-column label="预估净值" width="130" align="right">
-          <template #default="{ row }">{{ money(row.estimateNav) }}</template>
+        <el-table-column label="估值" width="110" align="right">
+          <template #default="{ row }">{{ Number(row.estimateNav || 0).toFixed(4) }}</template>
         </el-table-column>
-        <el-table-column label="预估涨跌" width="140" align="right">
+        <el-table-column label="涨跌" width="120" align="right">
           <template #default="{ row }">
             <span :class="clsByNumber(row.estimateGrowthRate)">{{ percent((row.estimateGrowthRate || 0) / 100) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="estimateTime" label="更新时间" width="180" />
-        <el-table-column label="操作" width="140">
+        <el-table-column label="来源" width="90" align="center">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.estimateSource === 'self_holdings' ? 'success' : 'info'">
+              {{ estimateSourceLabel(row.estimateSource) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="可信度" width="90" align="center">
+          <template #default="{ row }">
+            <el-tag size="small" :type="estimateConfidenceType(row.estimateConfidence)">
+              {{ estimateConfidenceLabel(row.estimateConfidence) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="estimateTime" label="时间" width="170" />
+        <el-table-column label="操作" width="110">
           <template #default="{ row }">
             <el-button size="small" type="danger" plain @click="remove(row.fundCode)">移除</el-button>
           </template>

@@ -14,6 +14,11 @@ public record PositionItemVO(
         BigDecimal estimatedProfit,
         BigDecimal estimatedProfitRate,
         BigDecimal todayProfit,
-        LocalDate lastTradeDate
+        LocalDate lastTradeDate,
+        String estimateSource,
+        String estimateConfidence,
+        BigDecimal holdingCoverageRate,
+        BigDecimal quotedCoverageRate,
+        java.time.LocalDateTime estimateUpdatedAt
 ) {
 }

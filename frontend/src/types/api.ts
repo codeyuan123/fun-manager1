@@ -28,6 +28,11 @@ export interface PositionItem {
   estimatedProfitRate: number
   todayProfit: number
   lastTradeDate: string
+  estimateSource: string
+  estimateConfidence: string
+  holdingCoverageRate: number
+  quotedCoverageRate: number
+  estimateUpdatedAt: string
 }
 
 export interface TransactionItem {
@@ -49,6 +54,11 @@ export interface WatchlistItem {
   estimateNav: number
   estimateGrowthRate: number
   estimateTime: string
+  estimateSource: string
+  estimateConfidence: string
+  holdingCoverageRate: number
+  quotedCoverageRate: number
+  estimateUpdatedAt: string
 }
 
 export interface DashboardOverview {
@@ -95,6 +105,18 @@ export interface FundEstimate {
   estimateNav: number
   estimateGrowthRate: number
   estimateTime: string
+  estimateSource: string
+  estimateConfidence: string
+  holdingCoverageRate: number
+  quotedCoverageRate: number
+  estimateUpdatedAt: string
+}
+
+export interface EstimateRefreshSummary {
+  fundCount: number
+  successCount: number
+  failedCount: number
+  refreshedAt: string
 }
 
 export interface FundReturnStat {
@@ -168,6 +190,11 @@ export interface FundDetail {
   estimateNav: number | null
   estimateGrowthRate: number | null
   estimateTime: string | null
+  estimateSource: string | null
+  estimateConfidence: string | null
+  holdingCoverageRate: number | null
+  quotedCoverageRate: number | null
+  estimateUpdatedAt: string | null
   sourceRate: number | null
   currentRate: number | null
   minPurchaseAmount: number | null

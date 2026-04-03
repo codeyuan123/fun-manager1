@@ -151,7 +151,12 @@ public class PositionService {
                 profit,
                 profitRate,
                 todayProfit,
-                position.getLastTradeDate()
+                position.getLastTradeDate(),
+                snapshot.estimateSource(),
+                snapshot.estimateConfidence(),
+                snapshot.holdingCoverageRate(),
+                snapshot.quotedCoverageRate(),
+                snapshot.estimateTime()
         );
     }
 

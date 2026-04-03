@@ -68,6 +68,11 @@ public class WatchlistService {
                 info == null ? "UNKNOWN" : info.getFundType(),
                 snapshot.currentNav(),
                 snapshot.estimateGrowthRate(),
+                snapshot.estimateTime(),
+                snapshot.estimateSource(),
+                snapshot.estimateConfidence(),
+                snapshot.holdingCoverageRate(),
+                snapshot.quotedCoverageRate(),
                 snapshot.estimateTime()
         );
     }

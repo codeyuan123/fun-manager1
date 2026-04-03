@@ -61,3 +61,28 @@ export const returnLabel = (value: string | null | undefined) => {
       return value || '--'
   }
 }
+
+export const estimateSourceLabel = (value: string | null | undefined) => {
+  if (value === 'self_holdings') return '自算'
+  if (value === 'third_party') return '第三方'
+  return '--'
+}
+
+export const estimateConfidenceLabel = (value: string | null | undefined) => {
+  if (value === 'high') return '高'
+  if (value === 'medium') return '中'
+  if (value === 'fallback') return '回退'
+  return '--'
+}
+
+export const estimateConfidenceType = (value: string | null | undefined) => {
+  if (value === 'high') return 'success'
+  if (value === 'medium') return 'warning'
+  if (value === 'fallback') return 'info'
+  return 'info'
+}
+
+export const ratioPercent = (value: number | string | null | undefined) => {
+  const n = Number(value ?? 0)
+  return `${(n * 100).toFixed(2)}%`
+}

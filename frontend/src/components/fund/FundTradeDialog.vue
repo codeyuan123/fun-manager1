@@ -102,7 +102,7 @@ const fillEstimate = async () => {
       form.fundName = response.data.data.fundName
     }
   } catch {
-    ElMessage.warning('获取估值失败，请手动确认净值')
+    ElMessage.warning('估值获取失败，请手动确认净值')
   }
 }
 
@@ -128,7 +128,7 @@ const submit = async () => {
     dialogVisible.value = false
     emit('success')
   } catch (error: any) {
-    ElMessage.error(error?.message || '交易提交失败')
+    ElMessage.error(error?.message || '提交失败')
   }
 }
 </script>
@@ -136,17 +136,17 @@ const submit = async () => {
 <template>
   <el-dialog
     v-model="dialogVisible"
-    :title="props.mode === 'BUY' ? '新增买入' : '新增卖出'"
+    :title="props.mode === 'BUY' ? '买入基金' : '卖出基金'"
     width="560px"
     class="terminal-dialog"
   >
-    <el-form label-width="112px" class="trade-form">
-      <el-form-item label="基金搜索">
+    <el-form label-width="92px" class="trade-form">
+      <el-form-item label="基金">
         <el-autocomplete
           v-model="form.fundCode"
           class="trade-search"
           :fetch-suggestions="fetchSuggestions"
-          placeholder="输入基金代码或名称"
+          placeholder="代码 / 名称"
           @select="selectFund"
           @blur="fillEstimate"
         >
@@ -159,22 +159,22 @@ const submit = async () => {
           </template>
         </el-autocomplete>
       </el-form-item>
-      <el-form-item label="基金名称">
-        <el-input v-model="form.fundName" placeholder="估值获取成功后自动带出" />
+      <el-form-item label="名称">
+        <el-input v-model="form.fundName" placeholder="自动带出" />
       </el-form-item>
-      <el-form-item label="交易金额">
+      <el-form-item label="金额">
         <el-input-number v-model="form.amount" :min="0.01" :step="100" :precision="2" class="w-full" />
       </el-form-item>
-      <el-form-item label="成交净值">
+      <el-form-item label="净值">
         <el-input-number v-model="form.nav" :min="0.000001" :step="0.01" :precision="6" class="w-full" />
       </el-form-item>
-      <el-form-item label="成交份额">
+      <el-form-item label="份额">
         <el-input-number v-model="form.shares" :min="0.0001" :step="10" :precision="4" class="w-full" />
       </el-form-item>
       <el-form-item label="手续费">
         <el-input-number v-model="form.fee" :min="0" :step="1" :precision="2" class="w-full" />
       </el-form-item>
-      <el-form-item label="交易日期">
+      <el-form-item label="日期">
         <el-date-picker v-model="form.tradeDate" type="date" value-format="YYYY-MM-DD" class="w-full" />
       </el-form-item>
       <el-form-item label="备注">

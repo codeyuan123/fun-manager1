@@ -153,7 +153,9 @@ public class EastmoneyFundParser {
             ));
         }
 
-        return new EastmoneyHoldingPayload(fundCode, year, quarter, reportDate, items);
+        int resolvedYear = reportDate == null ? year : reportDate.getYear();
+        int resolvedQuarter = reportDate == null ? quarter : quarterOf(reportDate);
+        return new EastmoneyHoldingPayload(fundCode, resolvedYear, resolvedQuarter, reportDate, items);
     }
 
     private List<EastmoneyNavPoint> parseNavPoints(String script) {

@@ -56,6 +56,11 @@ public class FundService {
                 fundName,
                 estimate.getEstimateNav(),
                 estimate.getEstimateGrowthRate(),
+                estimate.getEstimateTime(),
+                estimate.getEstimateSource(),
+                estimate.getEstimateConfidence(),
+                estimate.getHoldingCoverageRate(),
+                estimate.getQuotedCoverageRate(),
                 estimate.getEstimateTime()
         );
     }
@@ -79,6 +84,11 @@ public class FundService {
                 snapshot.latestNavDate(),
                 snapshot.currentNav(),
                 snapshot.estimateGrowthRate(),
+                snapshot.estimateTime(),
+                snapshot.estimateSource(),
+                snapshot.estimateConfidence(),
+                snapshot.holdingCoverageRate(),
+                snapshot.quotedCoverageRate(),
                 snapshot.estimateTime(),
                 remoteDetail.map(EastmoneyFundDetailPayload::sourceRate).orElse(null),
                 remoteDetail.map(EastmoneyFundDetailPayload::currentRate).orElse(null),

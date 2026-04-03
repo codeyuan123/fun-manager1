@@ -1,19 +1,17 @@
-package com.fundmanager.domain.vo;
+package com.fundmanager.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public record WatchlistItemVO(
+public record FundEstimateComputation(
         String fundCode,
-        String fundName,
-        String fundType,
         BigDecimal estimateNav,
         BigDecimal estimateGrowthRate,
-        LocalDateTime estimateTime,
+        LocalDateTime estimateUpdatedAt,
         String estimateSource,
         String estimateConfidence,
         BigDecimal holdingCoverageRate,
         BigDecimal quotedCoverageRate,
-        LocalDateTime estimateUpdatedAt
+        String rawSource
 ) {
 }
