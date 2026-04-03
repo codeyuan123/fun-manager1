@@ -1,76 +1,51 @@
-# Codex 接管说明
+# Codex 交接文档
 
-本文档用于未来在其他机器上继续接手 `fun-manager1` 时快速恢复上下文。
+更新时间：`2026-04-03`
 
-## 1. 当前接管结论
+## 1. 仓库与分支
 
-截至 `2026-04-03`：
+- 仓库：`https://github.com/codeyuan123/fun-manager1.git`
+- 默认分支：`master`
+- 本地工作目录：`C:\pro\fun-manager1`
 
-- 仓库分支：`master`
-- 远程仓库：`https://github.com/codeyuan123/fun-manager1.git`
-- 本地 Windows 运行环境已实测可用
-- 远端 Debian 服务器部署链路已实测可用
-- 当前代码已经不是最初的演示版，已经开始接入真实基金公开数据
+## 2. 当前系统状态（代码事实）
 
-## 2. 这轮已经做了什么
+- 前端：Vue 3 + Vite + TS，页面已中文化
+- 后端：Spring Boot 3.3.4 + JPA + Flyway + JWT
+- 数据：MariaDB，缓存：Redis（local profile 默认禁用 Redis）
+- 真实数据源：东方财富/天天基金，由后端统一代理
+- 已上线功能：登录、看板、持仓、自选、基金详情、回测
+- 详情页图表：区间涨幅 / 今日涨幅切换
 
-### 2.1 数据与后端
+## 3. 用户偏好与协作规则
 
-- 接入东方财富 / 天天基金搜索、估值、详情、季度持仓
-- 新增缓存层 `RemoteValueCacheService`
-- 新增季度持仓快照表 `fund_holding_snapshot`
-- 详情接口扩展为聚合返回
-- 看板趋势改成基于真实持仓数据计算
-- 认证新增 `POST /api/auth/change-password`，支持旧密码校验与密码强度校验
-- `Spring Security` 未授权访问统一返回 `401 Unauthorized`
+- 与用户沟通使用中文
+- 中国网络优先国内镜像
+- 页面文案保持中文
+- 默认不自动部署；只有用户明确说“部署/远端部署”才执行远端部署
+- 需要提交代码时，包含本次任务相关文档与代码改动
 
-### 2.2 前端
+## 4. 接手后先做什么
 
-- 登录页、看板、持仓、自选、基金详情等主要页面已改成中文
-- 新增基金详情页 ` /fund/:code `
-- 页面视觉已做过一轮重构，但仍有继续打磨空间
-- 头部新增“修改密码”入口和弹窗
-- 新增会话超时提醒弹窗，支持“继续会话 / 退出登录”
-- 全局 HTTP 拦截器对 `401` 统一处理并跳转登录页
+1. `git pull` 拉取最新
+2. 读 `README.md`
+3. 读 `docs/engineering.md` 与 `docs/deployment.md`
+4. 本地起服务验证基础链路
+5. 再进行功能开发或线上修复
 
-### 2.3 本地环境
+## 5. 本地运行基线
 
-- 本地 MariaDB 启动脚本已补好
-- 本地后端启动脚本已补好
-- 本地前端启动脚本已补好
-- 本地 `local` profile 已补上，默认不强依赖 Redis
-- 通过国内镜像下载并验证了 `JDK 17 / Maven / MariaDB`
-
-### 2.4 部署
-
-- Debian 部署脚本链路已走通
-- 当前要求是：每次任务完成都要部署到远端服务器
-- 注意 Windows 提交 shell 脚本时必须保持 LF 行尾
-
-### 2.5 测试
-
-- 新增 `AuthServiceTest`，覆盖修改密码核心分支（旧密码错误、弱密码、密码未变化、成功更新）
-
-## 3. 本地环境基线
-
-工作目录建议：
+推荐 runtime 目录：
 
 ```text
-C:\pro\
-  fun-manager1\
-  runtime\
+C:\pro\runtime\
+  apache-maven-3.9.14\
+  jdk-17.0.18+8\
+  mariadb-10.11.16-winx64\
+  mariadb-data\
 ```
 
-`runtime` 内当前建议放：
-
-```text
-apache-maven-3.9.14
-jdk-17.0.18+8
-mariadb-10.11.16-winx64
-mariadb-data
-```
-
-本地启动命令：
+启动命令：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File C:\pro\fun-manager1\scripts\start_local_mariadb.ps1
@@ -78,63 +53,27 @@ powershell -ExecutionPolicy Bypass -File C:\pro\fun-manager1\scripts\run_local_b
 powershell -ExecutionPolicy Bypass -File C:\pro\fun-manager1\scripts\run_local_frontend.ps1
 ```
 
-本地验证：
+默认账号：`admin / admin123`
 
-- `http://127.0.0.1:5173`
-- `http://127.0.0.1:18080/actuator/health`
-- 默认账号：`admin / admin123`
+## 6. 远端部署基线
 
-## 4. 远端环境基线
+关键脚本：
 
-目标是 Debian 服务器，当前生产形态：
+- `scripts/remote_upload.py`
+- `scripts/remote_exec.py`
+- `scripts/server_deploy_backend.sh`
+- `scripts/server_deploy_frontend.sh`
 
-- Nginx 提供 `/`
-- Spring Boot 监听 `127.0.0.1:18080`
-- MariaDB 监听本机 `3306`
-- Redis 监听本机 `6379`
-- systemd 服务名：`fund-manager-backend`
+关键目录：
 
-重要目录：
-
-- `/opt/fund-manager/backend`
+- `/opt/fund-manager/backend/app.jar`
 - `/opt/fund-manager/frontend/dist`
 - `/opt/fund-manager/config/backend.env`
 
-辅助脚本：
+## 7. 当前待关注事项
 
-- 仓库内：`scripts/remote_exec.py`
-- 仓库内：`scripts/remote_upload.py`
-- 服务器内：`/root/server_deploy_backend.sh`
-- 服务器内：`/root/server_deploy_frontend.sh`
-
-## 5. 继续开发时的硬约束
-
-- 全程中文回复
-- 使用国内镜像，避免国外下载过慢
-- 页面文案保持中文
-- 每次任务完成后都要重新部署远端
-- 生产环境仍以 Debian + 非 Docker 方式为主
-- 以当前 `master` 为基线继续推进
-
-## 6. 真实代码约定
-
-需要特别注意这些地方，避免被旧文档误导：
-
-- 后端 ORM 现在以 `Spring Data JPA` 为准，不是 `MyBatis-Plus`
-- 本地已经可以运行完整开发环境，不再是“只能本地编码、只在服务器运行”
-- Redis 在生产启用；本地 `local` profile 默认关闭自动装配
-
-## 7. 当前已知问题
-
-- 基金搜索中文名称乱码，优先排查东方财富搜索接口解析与编码
-- 前端打包产物偏大，需要继续做拆包
-- 部分设计文档存在历史表述，接手时要先看代码和 README
-
-## 8. 推荐接手顺序
-
-1. 拉取仓库
-2. 看 `README.md`
-3. 看本文档
-4. 启动本地 MariaDB / 后端 / 前端
-5. 验证登录与基金搜索
-6. 修当前最明确的问题，再部署到远端
+- 线上偶发异常优先看：
+  - `/opt/fund-manager/backend/logs/backend.log`
+  - `/opt/fund-manager/backend/logs/backend-error.log`
+- 前端打包体积较大（`useEChart` chunk 体积高），后续可做路由级拆包与图表按需优化
+- 文档如再与代码不一致，优先修文档再继续开发

@@ -72,8 +72,13 @@ const remove = async (fundCode: string) => {
   }
 }
 
-const openFund = (fundCode: string) => {
-  router.push(`/fund/${fundCode}`)
+const openFund = (fundCode: string | null | undefined) => {
+  const code = String(fundCode || '').trim()
+  if (!code) {
+    ElMessage.error('基金代码无效，无法打开详情')
+    return
+  }
+  router.push(`/fund/${encodeURIComponent(code)}`)
 }
 
 load()

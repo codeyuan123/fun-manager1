@@ -1,74 +1,61 @@
-﻿# 工程设计与数据库设计文档
+# 工程设计文档（按代码对齐）
+
+更新时间：`2026-04-03`
 
 ## 1. 仓库结构
 
 ```text
-fund-manager/
-  docs/
-    architecture.md
-    engineering.md
-    deployment.md
-  scripts/
-    remote_exec.py
-    remote_upload.py
-    server_bootstrap_debian.sh
+fun-manager1/
   backend/
+    src/main/java/com/fundmanager/
+      common/      统一响应与异常
+      config/      安全、HTTP 客户端等配置
+      controller/  REST 接口
+      domain/      entity/dto/vo
+      repository/  Spring Data JPA
+      scheduler/   定时任务
+      security/    JWT 过滤器与服务
+      service/     核心业务
+    src/main/resources/
+      application.yml
+      application-local.yml
+      db/migration/
   frontend/
+    src/
+      api/
+      components/
+      composables/
+      layout/
+      router/
+      stores/
+      types/
+      views/
+  scripts/
+  docs/
 ```
 
-后续目录规划：
+## 2. 后端分层与职责
 
-```text
-backend/
-  pom.xml
-  src/main/java/com/fundmanager/
-    FundManagerApplication.java
-    common/
-    config/
-    controller/
-    domain/
-    repository/
-    service/
-    scheduler/
-  src/main/resources/
-    application.yml
-    db/migration/
+- `controller`：暴露 API，不做复杂业务计算
+- `service`：业务编排、第三方数据解析、收益计算、回测执行
+- `repository`：JPA 访问 MariaDB
+- `scheduler`：交易时段估值刷新任务
+- `security`：JWT 鉴权、用户认证
+- `common`：`ApiResponse` + 全局异常处理
 
-frontend/
-  package.json
-  vite.config.ts
-  src/
-    api/
-    components/
-    router/
-    stores/
-    types/
-    views/
-      dashboard/
-      positions/
-      watchlist/
-      login/
-```
+## 3. 前端模块
 
-## 2. 后端分层
+- 路由入口：`frontend/src/router/index.ts`
+- 登录与会话：`stores/auth.ts`
+- HTTP 统一处理：`api/http.ts`
+- 业务页面：
+  - 看板：`views/dashboard`
+  - 基金行情/详情：`views/fund`
+  - 持仓：`views/positions`
+  - 自选：`views/watchlist`
+  - 回测：`views/backtest`
 
-- `controller`：接收请求、参数校验、返回统一结构
-- `service`：业务编排、收益测算、看板聚合
-- `repository`：数据库访问
-- `domain`：实体、DTO、VO
-- `scheduler`：基金净值与估值同步任务
-- `common`：统一响应、异常、工具
-
-## 3. 前端页面规划
-
-- `/login`：登录页
-- `/dashboard`：数据看板
-- `/positions`：持仓列表
-- `/positions/transactions`：交易明细
-- `/watchlist`：自选列表
-- `/fund/:code`：基金详情
-
-## 4. API 规划
+## 4. API 实际清单
 
 ### 4.1 认证
 
@@ -79,154 +66,104 @@ frontend/
 ### 4.2 基金
 
 - `GET /api/funds/search`
-- `GET /api/funds/{code}`
-- `GET /api/funds/{code}/nav-history`
-- `GET /api/funds/{code}/estimate`
+- `GET /api/funds/{fundCode}`
+- `GET /api/funds/{fundCode}/estimate`
+- `GET /api/funds/{fundCode}/estimate-history`
+- `GET /api/funds/{fundCode}/nav-history`
+- `GET /api/funds/{fundCode}/holdings`
 
-### 4.3 持仓
+### 4.3 估值刷新
+
+- `POST /api/estimates/refresh`
+
+### 4.4 持仓
 
 - `GET /api/positions`
 - `POST /api/positions/transactions/buy`
 - `POST /api/positions/transactions/sell`
 - `GET /api/positions/{fundCode}/transactions`
 
-### 4.4 自选
+### 4.5 自选
 
 - `GET /api/watchlist`
 - `POST /api/watchlist/{fundCode}`
 - `DELETE /api/watchlist/{fundCode}`
 
-### 4.5 看板
+### 4.6 看板
 
 - `GET /api/dashboard/overview`
 - `GET /api/dashboard/trend`
 - `GET /api/dashboard/distribution`
 - `GET /api/dashboard/ranking`
 
-### 4.6 会话与鉴权行为
+### 4.7 回测
 
-- 所有非公开接口都要求携带 JWT，鉴权失败统一返回 `401`
-- 前端收到 `401` 时统一清理登录态并重定向到 `/login`
-- 会话超时策略：默认 30 分钟无活动超时，剩余 5 分钟弹出续期提醒
-- 用户活动会更新本地会话活跃时间，点击“继续会话”立即续期
+- `POST /api/backtests/strategies/run`
+- `POST /api/backtests/funds/run`
 
-## 5. 数据库表设计
+### 4.8 鉴权规则
 
-### 5.1 `sys_user`
+- 放行：`POST /api/auth/login`、`GET /api/funds/search`、`GET /actuator/health`
+- 其他接口统一要求 JWT，未授权返回 `401`
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| id | bigint | 主键 |
-| username | varchar(64) | 登录名 |
-| password_hash | varchar(255) | 密码哈希 |
-| nickname | varchar(64) | 昵称 |
-| status | tinyint | 状态 |
-| created_at | datetime | 创建时间 |
-| updated_at | datetime | 更新时间 |
+## 5. 数据库与迁移
 
-### 5.2 `fund_info`
+Flyway 迁移文件：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| id | bigint | 主键 |
-| fund_code | varchar(16) | 基金代码 |
-| fund_name | varchar(128) | 基金名称 |
-| fund_type | varchar(64) | 基金类型 |
-| risk_level | varchar(32) | 风险等级 |
-| management_company | varchar(128) | 基金公司 |
-| status | tinyint | 状态 |
-| created_at | datetime | 创建时间 |
-| updated_at | datetime | 更新时间 |
+- `V1__init_schema.sql`
+- `V2__add_fund_holding_snapshot.sql`
+- `V3__extend_fund_estimate.sql`
 
-### 5.3 `fund_nav`
+核心表（当前真实存在）：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| id | bigint | 主键 |
-| fund_code | varchar(16) | 基金代码 |
-| nav_date | date | 净值日期 |
-| unit_nav | decimal(12,6) | 单位净值 |
-| accumulated_nav | decimal(12,6) | 累计净值 |
-| daily_growth_rate | decimal(10,4) | 日涨跌幅 |
-| source | varchar(64) | 数据来源 |
-| created_at | datetime | 创建时间 |
+- `sys_user`
+- `fund_info`
+- `fund_nav`
+- `fund_estimate`（已扩展 `estimate_source/estimate_confidence/holding_coverage_rate/quoted_coverage_rate`）
+- `fund_transaction`
+- `fund_position`
+- `fund_watchlist`
+- `fund_holding_snapshot`
 
-### 5.4 `fund_estimate`
+## 6. 第三方数据接入
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| id | bigint | 主键 |
-| fund_code | varchar(16) | 基金代码 |
-| estimate_time | datetime | 估值时间 |
-| estimate_nav | decimal(12,6) | 估算净值 |
-| estimate_growth_rate | decimal(10,4) | 估算涨跌幅 |
-| source | varchar(64) | 数据来源 |
-| created_at | datetime | 创建时间 |
+由后端统一请求东方财富/天天基金接口：
 
-### 5.5 `fund_transaction`
+- 搜索：`FundSearchAPI.ashx`
+- 估值：`fundgz/{code}.js`
+- 详情：`pingzhongdata/{code}.js`
+- 持仓：`FundArchivesDatas.aspx`
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| id | bigint | 主键 |
-| user_id | bigint | 用户 ID |
-| fund_code | varchar(16) | 基金代码 |
-| transaction_type | varchar(16) | BUY/SELL |
-| trade_date | date | 交易日期 |
-| amount | decimal(18,2) | 交易金额 |
-| shares | decimal(18,4) | 份额 |
-| fee | decimal(18,2) | 手续费 |
-| nav | decimal(12,6) | 交易净值 |
-| remark | varchar(255) | 备注 |
-| created_at | datetime | 创建时间 |
+缓存层：`RemoteValueCacheService`（Redis + 本地内存兜底）
 
-### 5.6 `fund_position`
+TTL：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| id | bigint | 主键 |
-| user_id | bigint | 用户 ID |
-| fund_code | varchar(16) | 基金代码 |
-| total_amount | decimal(18,2) | 累计投入金额 |
-| total_shares | decimal(18,4) | 当前份额 |
-| average_cost_nav | decimal(12,6) | 平均成本净值 |
-| current_cost | decimal(18,2) | 当前持仓成本 |
-| last_trade_date | date | 最近交易日期 |
-| created_at | datetime | 创建时间 |
-| updated_at | datetime | 更新时间 |
+- 搜索 30m
+- 估值 10m
+- 详情 6h
+- 持仓 12h
 
-### 5.7 `fund_watchlist`
+## 7. 调度任务
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| id | bigint | 主键 |
-| user_id | bigint | 用户 ID |
-| fund_code | varchar(16) | 基金代码 |
-| created_at | datetime | 创建时间 |
+`QuoteSyncScheduler` 已启用，`Asia/Shanghai` 时区下在交易日多段 cron 自动刷新估值：
 
-## 6. 测算规则
+- 9:35-9:55（5 分钟粒度）
+- 10:00-10:55（5 分钟粒度）
+- 11:00-11:30（5 分钟粒度）
+- 13:05-13:55（5 分钟粒度）
+- 14:00-14:55（5 分钟粒度）
+- 15:00 收盘刷新
 
-### 6.1 持仓成本
+## 8. 本地配置与约束
 
-- 买入：`current_cost += amount + fee`
-- 卖出：按平均成本法冲减成本
-- 平均成本净值：`current_cost / total_shares`
+- 默认 profile：`local`
+- `application-local.yml` 中禁用 Redis 自动配置，便于本地无 Redis 运行
+- 时间统一：`Asia/Shanghai`
+- API 前缀固定：`/api`
+- 前端构建基路径：`/`
 
-### 6.2 实时估算收益
+## 9. 工程注意事项
 
-- `estimated_market_value = total_shares * estimate_nav`
-- `estimated_profit = estimated_market_value - current_cost`
-- `estimated_profit_rate = estimated_profit / current_cost`
-
-### 6.3 当日收益
-
-- `today_profit = total_shares * (estimate_nav - previous_nav)`
-
-## 7. 开发约定
-
-- Java 使用 `BigDecimal` 处理金额和净值
-- 关键计算逻辑必须覆盖单元测试
-- 时间统一使用 `Asia/Shanghai`
-- 前端构建路径为 `/`
-- 后端 API 前缀固定为 `/api`
-- 生产数据库使用 MariaDB 10.11（MySQL 协议兼容）
-- 中国网络环境默认使用仓库内镜像配置：`frontend/.npmrc` 指向 `https://registry.npmmirror.com/`，`backend/.mvn/settings.xml` 指向 `https://maven.aliyun.com/repository/public`
+- Shell 脚本统一 LF（见 `.gitattributes`）
+- 生产密钥与数据库密码只放服务器环境变量，不进仓库
+- 文档与实现冲突时，以代码为准并及时回写本文档
