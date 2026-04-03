@@ -32,11 +32,7 @@ export const useAppStore = defineStore('app', () => {
   const isDark = computed(() => theme.value === 'dark')
 
   watch(theme, (value) => localStorage.setItem('fm_theme', JSON.stringify(value)), { immediate: true })
-  watch(
-    sidebarCollapsed,
-    (value) => localStorage.setItem('fm_sidebar_collapsed', JSON.stringify(value)),
-    { immediate: true },
-  )
+  watch(sidebarCollapsed, (value) => localStorage.setItem('fm_sidebar_collapsed', JSON.stringify(value)), { immediate: true })
   watch(tabbarEnabled, (value) => localStorage.setItem('fm_tabbar_enabled', JSON.stringify(value)), { immediate: true })
   watch(contentMode, (value) => localStorage.setItem('fm_content_mode', JSON.stringify(value)), { immediate: true })
 

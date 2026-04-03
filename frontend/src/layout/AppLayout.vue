@@ -5,19 +5,19 @@ import {
   CollectionTag,
   Fold,
   House,
+  Moon,
   Search,
   Setting,
   Star,
   Sunny,
-  Moon,
   Wallet,
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '../stores/auth'
 import { useAppStore } from '../stores/app'
 import { meApi, searchFundApi } from '../api/modules'
 import type { FundSearchItem } from '../types/api'
-import AppTabs from './AppTabs.vue'
 import AppSettingsDrawer from './AppSettingsDrawer.vue'
+import AppTabs from './AppTabs.vue'
 
 interface SearchOption extends FundSearchItem {
   value: string
@@ -53,12 +53,19 @@ const iconMap = {
 }
 
 const routeMenus = computed(() => {
-  const layoutRoute = router.getRoutes().find((item) => item.path === '/')
-  const children = layoutRoute?.children ?? []
-  const groups = new Map<string, MenuGroup>()
+  const routes = router
+    .getRoutes()
+    .filter((item) => item.meta?.menu && !item.meta?.hideInMenu)
+    .sort((left, right) => {
+      const groupOrder: Record<string, number> = { dashboard: 1, fund: 2, backtest: 3 }
+      const leftOrder = groupOrder[String(left.meta.group || 'zzz')] ?? 99
+      const rightOrder = groupOrder[String(right.meta.group || 'zzz')] ?? 99
+      if (leftOrder !== rightOrder) return leftOrder - rightOrder
+      return left.path.localeCompare(right.path)
+    })
 
-  for (const item of children) {
-    if (!item.meta?.menu || item.meta?.hideInMenu) continue
+  const groups = new Map<string, MenuGroup>()
+  for (const item of routes) {
     const groupKey = String(item.meta.group || 'default')
     const groupTitle = String(item.meta.groupTitle || item.meta.title || '')
     const menuItem: MenuItem = {
@@ -73,15 +80,17 @@ const routeMenus = computed(() => {
       groups.set(groupKey, { key: groupKey, title: groupTitle, items: [menuItem] })
     }
   }
-
   return Array.from(groups.values())
 })
 
 const activeMenu = computed(() => {
   const path = route.path
   if (path.startsWith('/dashboard')) return '/dashboard/workbench'
+  if (path.startsWith('/fund/market')) return '/fund/market'
   if (path.startsWith('/fund/positions')) return '/fund/positions'
   if (path.startsWith('/fund/watchlist')) return '/fund/watchlist'
+  if (path.startsWith('/backtest/strategies')) return '/backtest/strategies'
+  if (path.startsWith('/backtest/funds')) return '/backtest/funds'
   return path
 })
 
@@ -90,10 +99,16 @@ const breadcrumbList = computed(() => {
   const items = [{ title: '首页', path: '/dashboard/workbench' }]
   if (route.path.startsWith('/dashboard/workbench')) {
     items.push({ title: '工作台', path: route.path })
+  } else if (route.path.startsWith('/fund/market')) {
+    items.push({ title: '基金', path: '/fund/market' }, { title: '实时行情', path: route.path })
   } else if (route.path.startsWith('/fund/positions')) {
     items.push({ title: '基金', path: '/fund/positions' }, { title: '持仓', path: route.path })
   } else if (route.path.startsWith('/fund/watchlist')) {
     items.push({ title: '基金', path: '/fund/watchlist' }, { title: '自选', path: route.path })
+  } else if (route.path.startsWith('/backtest/strategies')) {
+    items.push({ title: '回测', path: '/backtest/strategies' }, { title: '策略回测', path: route.path })
+  } else if (route.path.startsWith('/backtest/funds')) {
+    items.push({ title: '回测', path: '/backtest/funds' }, { title: '基金对比', path: route.path })
   } else if (route.path.startsWith('/fund/')) {
     items.push({ title: '基金', path: '/fund/positions' }, { title: '详情', path: route.path })
   }

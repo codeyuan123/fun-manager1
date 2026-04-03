@@ -1,11 +1,13 @@
 import http from './http'
 import type {
   ApiResponse,
+  BacktestResult,
   DashboardOverview,
   DistributionItem,
   EstimateRefreshSummary,
   FundDetail,
   FundEstimate,
+  FundEstimateHistoryPoint,
   FundHoldingItem,
   FundNavPoint,
   FundSearchItem,
@@ -73,6 +75,11 @@ export const searchFundApi = (keyword: string) =>
 export const estimateApi = (fundCode: string) =>
   http.get<ApiResponse<FundEstimate>>(`/funds/${fundCode}/estimate`)
 
+export const estimateHistoryApi = (fundCode: string, date?: string) =>
+  http.get<ApiResponse<FundEstimateHistoryPoint[]>>(`/funds/${fundCode}/estimate-history`, {
+    params: { date },
+  })
+
 export const fundDetailApi = (fundCode: string) =>
   http.get<ApiResponse<FundDetail>>(`/funds/${fundCode}`)
 
@@ -86,3 +93,23 @@ export const fundHoldingsApi = (fundCode: string, year?: number, quarter?: numbe
       quarter,
     },
   })
+
+export const runBacktestStrategiesApi = (payload: {
+  fundCode: string
+  startDate: string
+  endDate: string
+  executionMode: string
+  initialCapital: number
+  strategyCodes: string[]
+  strategyParams: Record<string, Record<string, unknown>>
+}) => http.post<ApiResponse<BacktestResult[]>>('/backtests/strategies/run', payload)
+
+export const runBacktestFundsApi = (payload: {
+  fundCodes: string[]
+  startDate: string
+  endDate: string
+  executionMode: string
+  initialCapital: number
+  strategyCode: string
+  strategyParams: Record<string, unknown>
+}) => http.post<ApiResponse<BacktestResult[]>>('/backtests/funds/run', payload)

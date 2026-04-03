@@ -112,6 +112,14 @@ export interface FundEstimate {
   estimateUpdatedAt: string
 }
 
+export interface FundEstimateHistoryPoint {
+  estimateNav: number
+  estimateGrowthRate: number
+  estimateTime: string
+  estimateSource: string
+  estimateConfidence: string
+}
+
 export interface EstimateRefreshSummary {
   fundCount: number
   successCount: number
@@ -205,4 +213,36 @@ export interface FundDetail {
   holderStructure: FundChartBlock
   scaleTrend: FundScalePoint[]
   sameTypeReferences: FundPeerReference[]
+}
+
+export interface BacktestSeriesPoint {
+  date: string
+  nav: number
+  portfolioValue: number
+  investedAmount: number
+  cashBalance: number
+  shareBalance: number
+}
+
+export interface BacktestSummary {
+  cumulativeReturnRate: number
+  annualizedReturnRate: number
+  maxDrawdownRate: number
+  annualizedVolatility: number
+  sharpeRatio: number
+  calmarRatio: number
+  sortinoRatio: number
+  winRate: number
+  recoveryDays: number
+  totalInvested: number
+  endingValue: number
+}
+
+export interface BacktestResult {
+  fundCode: string
+  fundName: string
+  strategyCode: string
+  strategyName: string
+  summary: BacktestSummary
+  series: BacktestSeriesPoint[]
 }

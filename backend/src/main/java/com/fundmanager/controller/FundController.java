@@ -2,17 +2,20 @@ package com.fundmanager.controller;
 
 import com.fundmanager.common.ApiResponse;
 import com.fundmanager.domain.vo.FundDetailVO;
+import com.fundmanager.domain.vo.FundEstimateHistoryPointVO;
 import com.fundmanager.domain.vo.FundEstimateVO;
 import com.fundmanager.domain.vo.FundHoldingItemVO;
 import com.fundmanager.domain.vo.FundNavVO;
 import com.fundmanager.domain.vo.FundSearchItemVO;
 import com.fundmanager.service.FundService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -38,6 +41,13 @@ public class FundController {
     @GetMapping("/{fundCode}/estimate")
     public ApiResponse<FundEstimateVO> estimate(@PathVariable String fundCode) {
         return ApiResponse.ok(fundService.getEstimate(fundCode));
+    }
+
+    @GetMapping("/{fundCode}/estimate-history")
+    public ApiResponse<List<FundEstimateHistoryPointVO>> estimateHistory(
+            @PathVariable String fundCode,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ApiResponse.ok(fundService.estimateHistory(fundCode, date));
     }
 
     @GetMapping("/{fundCode}/nav-history")

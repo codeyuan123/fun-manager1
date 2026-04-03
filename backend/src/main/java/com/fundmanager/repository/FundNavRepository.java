@@ -17,6 +17,8 @@ public interface FundNavRepository extends JpaRepository<FundNav, Long> {
 
     List<FundNav> findByFundCodeOrderByNavDateAsc(String fundCode);
 
+    List<FundNav> findByFundCodeAndNavDateBetweenOrderByNavDateAsc(String fundCode, LocalDate start, LocalDate end);
+
     List<FundNav> findByFundCodeAndNavDateGreaterThanEqualOrderByNavDateAsc(String fundCode, LocalDate start);
 
     List<FundNav> findByFundCodeInAndNavDateBetweenOrderByNavDateAsc(List<String> fundCodes, LocalDate start, LocalDate end);

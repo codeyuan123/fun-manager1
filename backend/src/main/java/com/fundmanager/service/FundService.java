@@ -5,6 +5,7 @@ import com.fundmanager.domain.entity.FundEstimate;
 import com.fundmanager.domain.entity.FundInfo;
 import com.fundmanager.domain.entity.FundNav;
 import com.fundmanager.domain.vo.FundDetailVO;
+import com.fundmanager.domain.vo.FundEstimateHistoryPointVO;
 import com.fundmanager.domain.vo.FundEstimateVO;
 import com.fundmanager.domain.vo.FundHoldingItemVO;
 import com.fundmanager.domain.vo.FundNavVO;
@@ -136,6 +137,10 @@ public class FundService {
                         item.getDailyGrowthRate()
                 ))
                 .toList();
+    }
+
+    public List<FundEstimateHistoryPointVO> estimateHistory(String fundCode, LocalDate date) {
+        return quoteService.loadEstimateHistory(fundCode, date);
     }
 
     public List<FundHoldingItemVO> holdings(String fundCode, Integer year, Integer quarter) {

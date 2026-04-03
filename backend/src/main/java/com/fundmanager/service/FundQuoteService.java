@@ -4,6 +4,7 @@ import com.fundmanager.domain.entity.FundEstimate;
 import com.fundmanager.domain.entity.FundHoldingSnapshot;
 import com.fundmanager.domain.entity.FundInfo;
 import com.fundmanager.domain.entity.FundNav;
+import com.fundmanager.domain.vo.FundEstimateHistoryPointVO;
 import com.fundmanager.domain.vo.FundHoldingItemVO;
 import com.fundmanager.domain.vo.FundSearchItemVO;
 import com.fundmanager.repository.FundEstimateRepository;
@@ -188,6 +189,34 @@ public class FundQuoteService {
         return latestHoldingsFromDb(fundCode);
     }
 
+    public Optional<FundInfo> loadFundInfo(String fundCode) {
+        return fundInfoRepository.findByFundCode(fundCode);
+    }
+
+    public List<FundNav> loadNavHistoryEntities(String fundCode, LocalDate startDate, LocalDate endDate) {
+        return navRepository.findByFundCodeAndNavDateBetweenOrderByNavDateAsc(fundCode, startDate, endDate);
+    }
+
+    public List<FundEstimateHistoryPointVO> loadEstimateHistory(String fundCode, LocalDate date) {
+        LocalDate targetDate = date == null ? LocalDate.now() : date;
+        if (targetDate.equals(LocalDate.now())) {
+            refreshEstimate(fundCode);
+        }
+        LocalDateTime start = targetDate.atStartOfDay();
+        LocalDateTime end = targetDate.plusDays(1).atStartOfDay().minusNanos(1);
+        return estimateRepository.findByFundCodeAndEstimateTimeBetweenOrderByEstimateTimeAsc(fundCode, start, end)
+                .stream()
+                .filter(item -> item.getEstimateNav() != null && item.getEstimateNav().compareTo(BigDecimal.ZERO) > 0)
+                .map(item -> new FundEstimateHistoryPointVO(
+                        item.getEstimateNav(),
+                        item.getEstimateGrowthRate(),
+                        item.getEstimateTime(),
+                        item.getEstimateSource(),
+                        item.getEstimateConfidence()
+                ))
+                .toList();
+    }
+
     private void refreshRecentHoldings(String fundCode) {
         LocalDate cursor = LocalDate.now().withDayOfMonth(1);
         for (int i = 0; i < 8; i++) {
@@ -230,6 +259,9 @@ public class FundQuoteService {
     }
 
     private FundEstimate saveEstimate(FundEstimateComputation computation) {
+        if (computation.estimateNav() == null || computation.estimateNav().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalStateException("estimate nav must be positive");
+        }
         Optional<FundEstimate> latest = estimateRepository.findTopByFundCodeOrderByEstimateTimeDesc(computation.fundCode());
         if (latest.isPresent()
                 && latest.get().getEstimateTime() != null
